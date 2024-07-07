@@ -1,7 +1,7 @@
 import logging
 from memory.memory import create_memory_folders, store_in_stm, DialogEntry
-from agi import AGI
-from chatter import GPT4o, GroqModel
+from automind.agi import AGI
+from webmind.chatter import GPT4o, GroqModel
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
