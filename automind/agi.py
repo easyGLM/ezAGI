@@ -1,9 +1,9 @@
 import logging
-from SocraticReasoning import SocraticReasoning
-from logic import LogicTables
+from automind.SocraticReasoning import SocraticReasoning
+from automind.logic import LogicTables
 from memory.memory import store_in_stm, DialogEntry
-from chatter import GPT4o, Groq
-from api import APIManager  # ensure this import statement is added
+from webmind.chatter import GPT4o, Groq
+from webmind.api import APIManager  # ensure this import statement is added
 
 class AGI:
     def __init__(self, chatter):
