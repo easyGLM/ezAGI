@@ -1,4 +1,14 @@
 # logic.py (c) 2024 Gregory L. Magnusson MIT license
+# store log in ./memory/truth as ./memory/truth/logiclogs.txt and in ./mindx/logiclog.txt
+#### handling belief, contigent, fact and truth as MEMORY in ./memory/truth ####
+# logic BELIEF
+# store belief as belief in {datetime.datetime.now().isoformat()}_belief.json
+# logic CONTINGENT
+# store not tautology as contingent in {contingent_data['timestamp']}_contingent.json
+# logic FACT
+# store modus ponens as fact in {fact_data['timestamp']}_fact.json
+# logic TRUTH
+# store truth as truth in {truth_data['timestamp']}_truth.json
 import itertools
 import logging
 import datetime
