@@ -1,3 +1,10 @@
+# SocraticReasoning.py (c) 2024 Gregory L. Magnusson MIT license
+################ memory/logs/ for socratic #####################
+# self.socraticlogs_file = './memory/logs/socraticlogs.txt'
+# self.premises_file = './memory/logs/premises.json'
+# self.not_premises_file = './memory/logs/notpremise.json'
+# self.conclusions_file = './memory/logs/conclusions.txt'
+# self.truth_tables_file = './memory/logs/truth.json'
 import logging
 import os
 import pathlib
@@ -46,7 +53,7 @@ class SocraticReasoning:
         self.premises_file = './memory/logs/premises.json'
         self.not_premises_file = './memory/logs/notpremise.json'
         self.conclusions_file = './memory/logs/conclusions.txt'
-        self.truth_tables_file = './memory/logs/truth_tables.json'
+        self.truth_tables_file = './memory/logs/truth.json'
 
         self.max_tokens = 100  # Default max tokens for Socratic premise from add_premise(statement)
         self.chatter = chatter  # Chatter model for generating responses
