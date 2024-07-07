@@ -1,3 +1,6 @@
+# agi.py (c) Gregory L. Magnusson MIT license 2024
+# input from environment to learn from data to make decisions
+# get input from environment_data = self.perceive_environment() learn_from_date(self, data) to make_decisions(self, proposition_p, proposition_q)
 import logging
 from automind.SocraticReasoning import SocraticReasoning
 from automind.logic import LogicTables
