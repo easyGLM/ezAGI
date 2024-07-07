@@ -1,0 +1,25 @@
+## integrate llama-agents
+#llama-agents
+## integrate llama-index replicate and huggingface
+#pip install llama-index-core
+#pip install llama-index-llms-openai
+#pip install llama-index-llms-replicate
+#pip install llama-index-embeddings-huggingface
+
+# For interacting with the OpenAI API.
+openai
+
+# For interacting with the groq models
+groq
+
+# For loading environment variables from a .env file.
+python-dotenv
+
+# for UI integration as fastapi
+nicegui
+
+# For fast JSON processing.
+ujson
+
+# For system and process utilities.
+psutil
