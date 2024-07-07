@@ -1,3 +1,4 @@
+# logic.py (c) 2024 Gregory L. Magnusson MIT license
 import itertools
 import logging
 import datetime
