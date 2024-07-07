@@ -1,27 +1,25 @@
 # easyAGI (c) Gregory L. Magnusson MIT license 2024
-import logging
-import asyncio
-import concurrent.futures
-from nicegui import ui, app
-from memory.memory import create_memory_folders, store_in_stm, save_conversation_memory, save_internal_reasoning, DialogEntry, save_valid_truth
-from api import APIManager
-from chatter import GPT4o, GroqModel
-from fastapi.staticfiles import StaticFiles
+# conversation from main_loop(self) is saved to ./memory/stm/timestampmemeory.json from memory.py creating short term memory store of input response
+# reasoning_loop(self)conversation from internal_conclusions are saved in ./memory/logs/thoughts.json
+
 import os
-import json
 import time
 from datetime import datetime
-from automind import FundamentalAGI
-import httpx
+from nicegui import ui, app # handle UIUX
+from fastapi.staticfiles import StaticFiles # integrate fastapi static folder and gfx folder
+from webmind.api import APIManager # handle API from api
+from webmind.chatter import GPT4o, GroqModel # input response handler
+from automind.automind import FundamentalAGI # automind decision
+from memory.memory import create_memory_folders, store_in_stm, save_conversation_memory, save_internal_reasoning, DialogEntry, save_valid_truth
+import ujson as json
+import httpx # remote APIs data handler
+import asyncio
+import logging
+import concurrent.futures
+
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
-
-# Serve static files from the 'gfx' directory
-app.mount('/gfx', StaticFiles(directory='gfx'), name='gfx')
-
-# Serve the CSS file
-app.mount('/static', StaticFiles(directory='static'), name='static')
 
 class OpenMind:
     def __init__(self):
@@ -124,7 +122,8 @@ class OpenMind:
         """
         Log and print the conclusion from the AGI.
         """
-        logging.info(f"Communicating response: {conclusion}")
+        # uncomment below to show conclusion in the terminal
+        #logging.info(f"Communicating response: {conclusion}")
         self.display_internal_conclusion(conclusion)
         return conclusion
 
@@ -132,7 +131,7 @@ class OpenMind:
         """
         Internal reasoning loop for continuous AGI reasoning without user interaction.
         This loop adds a prompt to the AGI and processes its conclusion periodically.
-        The conclusions are displayed in the response window.
+        The conclusions are currently displayed in the response window and saved to ./memory/logs/thoughts.json including ./memory/logs/notpremise.json
         """
         while True:
             if self.agi_instance is None:
@@ -218,7 +217,8 @@ class OpenMind:
             # Store the dialog entry
             entry = DialogEntry(question, conclusion)
             store_in_stm(entry)
-            save_conversation_memory({"timestamp": int(time.time()), "dialog": {"instruction": question, "response": conclusion}})
+            # saves conversation following each input response to ./memory/stm/timestampmemeory.json from memory.py
+            save_conversation_memory({"dialog": {"instruction": question, "response": conclusion}})
         except Exception as e:
             logging.error(f"Error getting conclusion from easyAGI: {e}")
             log.push(f"Error getting conclusion from easyAGI: {e}")
@@ -254,17 +254,26 @@ class OpenMind:
     def handle_javascript_response(self, msg):
         request_id = msg.get('request_id')
         result = msg.get('result')
-        
+
         if request_id is not None:
             if result is not None:
                 JavaScriptRequest.resolve(request_id, result)
             else:
                 # Handle the case where 'result' is missing
                 JavaScriptRequest.reject(request_id, 'Missing result in JavaScript response')
-                logging.error(f"JavaScript response missing 'result' for request_id: {request_id}")
+                logging.error(f"JavaScript response missing 'result' for request_id: {request_id}. Response: {msg}")
         else:
             # Handle the case where 'request_id' is missing if needed
-            logging.error("JavaScript response missing 'request_id'")
+            logging.error(f"JavaScript response missing 'request_id'. Response: {msg}")
+
+        # Log the entire message for debugging purposes
+        logging.debug(f"Received JavaScript response: {msg}")
+
+# Serve static files from the 'gfx' directory
+app.mount('/gfx', StaticFiles(directory='gfx'), name='gfx')
+
+# Serve the CSS file
+app.mount('/static', StaticFiles(directory='static'), name='static')
 
 openmind = OpenMind()
 
@@ -275,12 +284,23 @@ def main():
 
     async def send() -> None:
         question = text.value
-        text.value = ''
+        text.value = ''                              # openprompt for openmind
         await openmind.send_message(question)
-        await openmind.internal_queue.put(question)  # Add the prompt to the internal queue for processing
+        await openmind.internal_queue.put(question)  # add openmind to the internal queue for processing
 
-    # Link the external stylesheet
+    # ui.add_head_html
     ui.add_head_html('<link rel="stylesheet" href="/static/easystyle.css">')
+    ui.add_head_html('<title>EasyAGI Augmented Generative Intelligence</title>')
+    ui.add_head_html('''<meta name="description" content="easyAGI augmented generative intelligence for LLM">''')
+    ui.add_head_html('''<meta name="keywords" content="EasyAGI Augmented Generative Intelligence">''')
+    ui.add_head_html('''<meta name="author" content="Gregory L. Magnusson">''')
+    ui.add_head_html('''<meta name="license" content="MIT">''')
+    ui.add_head_html('<link rel="icon" type="image/x-icon" href="/gfx/fav/favicon.ico">')
+    ui.add_head_html('''<meta name="viewport" content="width=device-width, initial-scale=1.0">''')
+    ui.add_head_html('<link rel="apple-touch-icon" sizes="180x180" href="/gfx/fav/apple-touch-icon.png">')
+    ui.add_head_html('<link rel="icon" type="image/png" sizes="32x32" href="/gfx/fav/favicon-32x32.png">')
+    ui.add_head_html('<link rel="icon" type="image/png" sizes="16x16" href="/gfx/fav/favicon-16x16.png">')
+    ui.add_head_html('<link rel="manifest" href="/site.webmanifest">')
 
     # Initialize dark mode toggle
     dark_mode = ui.dark_mode()
@@ -312,10 +332,11 @@ def main():
             ui.markdown(log_content).classes('w-full')
 
     with ui.tabs().classes('w-full') as tabs:
-        chat_tab = ui.tab('chat').props('style="color: #218838; font-weight: bold; background-color: #e2e6ea; font-size: 16px; padding: 10px; border: 3px groove #218838; border-radius: 5px; transition: background-color 300ms ease-in-out, box-shadow 300ms ease-in-out;"').classes('ml-2 py-2 px-4 shadow-md hover:shadow-lg active:shadow-sm')
+        chat_tab = ui.tab('chat').classes('response-style')
         logs_tab = ui.tab('logs').props('style="color: #218838; font-weight: bold; background-color: #e2e6ea; font-size: 16px; padding: 10px; border: 3px groove #218838; border-radius: 5px; transition: background-color 200ms ease-in-out, box-shadow 200ms ease-in-out;"').classes('ml-2 py-2 px-4 shadow-md hover:shadow-lg active:shadow-sm')
         api_tab = ui.tab('APIk').props('style="color: #218838; font-weight: bold; background-color: #e2e6ea; font-size: 16px; padding: 10px; border: 3px groove #218838; border-radius: 5px; transition: background-color 100ms ease-in-out, box-shadow 100ms ease-in-out;"').classes('ml-2 py-2 px-4 shadow-md hover:shadow-lg active:shadow-sm')
-    with ui.tab_panels(tabs, value=chat_tab).props('style="color: rgb(0, 50, 0); background-color: rgba(70, 130, 180, 0.777); padding: 10px; border-radius: 5px;"').classes('items-center justify-center w-full max-w-2xl mx-auto flex-grow items-stretch'):
+    # response window
+    with ui.tab_panels(tabs, value=chat_tab).props('style="color: rgb(0, 50, 0); background-color: rgba(0, 0, 0, 0.666);"').classes('response-style'):
         message_container = ui.tab_panel(chat_tab).classes('items-stretch')
         with ui.tab_panel(logs_tab):
             log = ui.log().classes('w-full h-full')
@@ -349,4 +370,4 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        logging.info("gameover")
+        logging.info("Shutting down...")
