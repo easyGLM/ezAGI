@@ -269,11 +269,11 @@ class OpenMind:
         # Log the entire message for debugging purposes
         logging.debug(f"Received JavaScript response: {msg}")
 
-# Serve static files from the 'gfx' directory
+# Serve static graphic files and easystyle.css from the 'gfx' directory
 app.mount('/gfx', StaticFiles(directory='gfx'), name='gfx')
 
 # Serve the CSS file
-app.mount('/static', StaticFiles(directory='static'), name='static')
+# app.mount('/static', StaticFiles(directory='static'), name='static')
 
 openmind = OpenMind()
 
@@ -289,7 +289,7 @@ def main():
         await openmind.internal_queue.put(question)  # add openmind to the internal queue for processing
 
     # ui.add_head_html
-    ui.add_head_html('<link rel="stylesheet" href="/static/easystyle.css">')
+    ui.add_head_html('<link rel="stylesheet" href="/gfx/easystyle.css">')
     ui.add_head_html('<title>EasyAGI Augmented Generative Intelligence</title>')
     ui.add_head_html('''<meta name="description" content="easyAGI augmented generative intelligence for LLM">''')
     ui.add_head_html('''<meta name="keywords" content="EasyAGI Augmented Generative Intelligence">''')
