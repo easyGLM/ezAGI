@@ -3,10 +3,10 @@ import os
 import pathlib
 import ujson
 from datetime import datetime
-from chatter import GPT4o, GroqModel, OllamaModel
-from logic import LogicTables
+from webmind.chatter import GPT4o, GroqModel, OllamaModel
+from automind.logic import LogicTables
 from memory.memory import create_memory_folders, store_in_stm, DialogEntry
-from api import APIManager
+from webmind.api import APIManager
 
 class SocraticReasoning:
     def __init__(self, chatter):
