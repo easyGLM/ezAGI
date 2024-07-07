@@ -1,3 +1,4 @@
+# automind.py (c) 2024 Gregory L. Magnusson MIT license
 import logging
 from memory.memory import create_memory_folders, store_in_stm, DialogEntry
 from automind.agi import AGI
