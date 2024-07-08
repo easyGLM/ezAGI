@@ -1,4 +1,4 @@
-# funAGI.py install requires python < 3.7
+# easyAGI.py install requires python < 3.7
 
 ```bash
 git clone https://github.com/pythaiml/funAGI/
@@ -7,7 +7,7 @@ python3 -m venv agi
 source agi/bin/activate
 pip install -r requirements.txt
 # start the cli version
-python3 funAGIcli.py
+python3 easyAGIcli.py
 # start the UIUX version
-python3 funAGI.py
+python3 easyAGI.py
 ```
