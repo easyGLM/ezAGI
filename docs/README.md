@@ -1,14 +1,13 @@
-# funAGI
-<b>fundamental augmented generative intelligence framework</b>
+# easyAGI
+<b>easy augmented generative intelligence framework</b>
 
-The funAGI workflow integrates memory management, UI/UX design, core AGI logic, user interaction interfaces, reasoning capabilities, API development, and communication modules to create a robust and scalable AGI system. Each modular component plays a crucial role in enabling funAGI to learn, adapt, and interact intelligently with its environment. THe modular framework is designed to be extended to enhance FunAGI's capabilities, making it a versatile tool for fundamental Autonomous General Intelligence development and integration with existing language models.
+The easyAGI workflow integrates memory management, UI/UX design, core AGI logic, user interaction interfaces, reasoning capabilities, API development, and communication modules to create a robust and scalable AGI system. Each modular component plays a crucial role in enabling funAGI to learn, adapt, and interact intelligently with its environment. THe modular framework is designed to be extended to enhance FunAGI's capabilities, making it a versatile tool for fundamental Autonomous General Intelligence development and integration with existing language models.
 
-funAGI is designed to create a robust and scalable fundamental augmented generative intelligence system integrated with memory management, user interaction interfaces, reasoning capabilities, and API management into a modular architecture. funAGI key components include the core AGI logic from SocraticRreasoning to learn from data and make decisions, validating and drawing logic conclusions from given premise to generate conclusion. Memory management efficiently stores and retrieves conversation memories and logic creates valid truth. funAGI is designed to build upon past interactions and improve over time. API management handles API keys using dotenv allowing seamless interaction with external models such as OpenAI, groq and claude to generate responses. User interfaces offer both Command Line Interface (funAGIcli) and Graphical User Interface (funAGI) ensuring versatile and user-friendly interaction experiences. funAGI modular design allows for easy scalability and integration of new functionalities, making it a versatile and reliable tool for developing more advanced AGI systems. funAGI is developing to meet the evolving demands of AGI research and application, fostering innovation and efficiency for further development of open source augmented intelligence solutions.
+easyAGI is designed to create a robust and scalable fundamental augmented generative intelligence system integrated with memory management, user interaction interfaces, reasoning capabilities, and API management into a modular architecture. funAGI key components include the core AGI logic from SocraticRreasoning to learn from data and make decisions, validating and drawing logic conclusions from given premise to generate conclusion. Memory management efficiently stores and retrieves conversation memories and logic creates valid truth. funAGI is designed to build upon past interactions and improve over time. API management handles API keys using dotenv allowing seamless interaction with external models such as OpenAI, groq and claude to generate responses. User interfaces offer both Command Line Interface (funAGIcli) and Graphical User Interface (funAGI) ensuring versatile and user-friendly interaction experiences. funAGI modular design allows for easy scalability and integration of new functionalities, making it a versatile and reliable tool for developing more advanced AGI systems. funAGI is developing to meet the evolving demands of AGI research and application, fostering innovation and efficiency for further development of open source augmented intelligence solutions.
 
 # UIUX has been split into two versions<br />
-<b>funAGIcli.py</b> will maintain the terminal based interaction<br />
-<b>funAGI.py</b> is the UIUX graphical expression<br />
-
+<b>easyAGIcli.py</b> will maintain the terminal based interaction for useful for SimpleCoder integrations<br />
+<b>easyAGI.py</b> is the UIUX graphical expression<br />
 
 # FundamentalAGI Project Setup
 
@@ -19,15 +18,19 @@ See also <a href="https://rage.pythai.net/draw_conclusionself/">draw_conclusion(
 
 # project structure
 
-    funAGI.py: main script for fundamental AGI
-    funAGIcli.py run the terminal interaction version
+    easyAGI.py: main UIUX script for fundamental AGI
+    easyAGIcli.py run the terminal interaction version
+
+    automind folder contain reasoning components
     agi.py: Core AGI logic
-    api.py: API key management
     bdi.py: BDI (Belief-Desire-Intention) model
-    chatter.py: Interface for different chat models
     logic.py: Logic table management and evaluation
-    memory.py: Memory management for storing dialogues and truth values
     SocraticReasoning.py: Socratic Reasoning from logic
+
+        api.py: API key management
+        chatter.py: Interface for different chat models
+        memory.py: Memory management for storing dialogues and truth values
+
 
 # agi.py AGI workflow
 
