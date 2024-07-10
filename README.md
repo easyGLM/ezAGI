@@ -78,9 +78,11 @@ PYTHAI/
 
 
 # <a href="https://github.com/easyGLM/easyAGI/blob/main/requirements.txt">requirements</a><br />
-python > 3.7
+python > 3.7<br />
  <a href="https://console.groq.com/docs/quickstart">groq API key</a> or <br />
  <a href="https://openai.com/index/openai-api/">openai API key</a> <br />
+
+ # llama3 integration coming soon
  
  # INSTALL
 
