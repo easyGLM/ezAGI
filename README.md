@@ -92,11 +92,9 @@ cd funAGI
 python3 -m venv agi
 source agi/bin/activate
 pip install -r requirements.txt
-# activate command line interaction (optional)
+# activate command line interaction (useful as coding agent)
 python3 funAGIcli.py
-# activate easyAGI.py with internal reasoning EXPERIMENTAL (optional)
+# activate easyAGI.py with internal reasoning (EXPERIMENTAL)
 python3 easyAGI.py
-# active graphical UIUX (required)
-python3 funAGI.py
 ```
 
