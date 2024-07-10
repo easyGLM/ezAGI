@@ -35,7 +35,7 @@ PYTHAI/
 │   ├── webmindML/  # Machine Learning functionalities for web data.
 │   │   ├── data_processing/  # Data processing modules.
 │   │   └── tests/  # tests for webMindML.
-│   ├── openmind/  # Open-source components from fundamentalAGI, agi and internal reasoning
+│   ├── openmind/  # open-source components from fundamentalAGI, agi and internal reasoning
 │   └── common/  # common utilities and configurations shared across submodules.
 │       ├── utils/  # utility functions.
 │       ├── configs/  # Configuration files.
@@ -45,7 +45,7 @@ PYTHAI/
 │   ├── processed/  # processed data files.
 │   ├── external/  # external data sources.
 │   └── interim/  # intermediate data states.
-├── scripts/  # Scripts for setup, deployment, training, and evaluation.
+├── scripts/  # scripts for setup, deployment, training, and evaluation.
 │   ├── setup/  # setup and installation scripts.
 │   ├── deployment/  # deployment scripts.
 │   ├── training/  # training scripts for models.
@@ -54,26 +54,26 @@ PYTHAI/
 │   ├── database/  # database configuration files.
 │   ├── models/  # model-specific configuration files.
 │   └── application/  # application configuration files.
-├── tests/  # Tests for ensuring code quality and functionality.
+├── tests/  # tests for ensuring code quality and functionality.
 │   ├── integration/  # Integration tests.
 │   ├── unit/  # Unit tests.
 │   └── e2e/  # End-to-end tests.
 ├── logs/  # Logs for various processes.
-│   ├── training/  # Logs for training processes.
-│   ├── evaluation/  # Logs for evaluation processes.
-│   └── application/  # Application logs.
+│   ├── training/  # logs for training processes.
+│   ├── evaluation/  # logs for evaluation processes.
+│   └── application/  # application logs.
 ├── models/  # Storage for model files.
-│   ├── trained/  # Trained model files.
-│   ├── checkpoints/  # Checkpoints during training.
-│   └── export/  # Exported model files.
+│   ├── trained/  # trained model files from coach using SimpleMind
+│   ├── checkpoints/  # checkpoints during training.
+│   └── export/  # exported model files from coach
 ├── results/  # Storage for results and reports.
-│   ├── figures/  # Graphical results.
+│   ├── figures/  # graphical results.
 │   ├── tables/  # Tabular results.
-│   └── reports/  # Comprehensive reports.
+│   └── reports/  # comprehensive reports.
 └── resources/  # Additional resources like images and templates.
-    ├── images/  # Image files.
+    ├── images/  # image files.
     ├── gfx/  # graphics and CSS and styling files.
-    └── templates/  # Templates for various uses.
+    └── templates/  # templates for various uses.
 ```
 
 
