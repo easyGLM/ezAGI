@@ -1,5 +1,5 @@
 # PYTHAI expression of easyAGI for augmented generative intelligence LLM enhancement framework
-
+```csharp
 PYTHAI/
 ├── docs/  # Documentation for various aspects of the project.
 │   ├── white_papers/  white papers discussing theoretical aspects of easyAGI innovations
@@ -72,4 +72,5 @@ PYTHAI/
     ├── images/  # Image files.
     ├── gfx/  # graphics and CSS and styling files.
     └── templates/  # Templates for various uses.
+```
 
