@@ -1,4 +1,6 @@
-# PYTHAI expression of easyAGI for augmented generative intelligence LLM enhancement framework
+# PYTHAI expression of easyAGI for augmented generative intelligence<br />
+# framework for enhancing LLM with reasoning
+
 ```csharp
 PYTHAI/
 ├── docs/  # Documentation for various aspects of the project.
