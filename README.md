@@ -1,4 +1,4 @@
-# PYTHAI expression of easyAGI for augmented generative intelligence<br />
+# easyAGI (c) PYTHAI augmented generative intelligence<br />
 # framework for enhancing LLM with reasoning
 
 ```csharp
