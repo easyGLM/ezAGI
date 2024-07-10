@@ -76,3 +76,24 @@ PYTHAI/
     └── templates/  # Templates for various uses.
 ```
 
+
+# requirement
+ <a href="https://console.groq.com/docs/quickstart">groq API key</a> or <br />
+ <a href="https://openai.com/index/openai-api/">openai API key</a> <br />
+ 
+ # INSTALL
+
+```bash
+git clone https://github.com/pythaiml/funAGI/
+cd funAGI
+python3 -m venv agi
+source agi/bin/activate
+pip install -r requirements.txt
+# activate command line interaction (optional)
+python3 funAGIcli.py
+# activate easyAGI.py with internal reasoning EXPERIMENTAL (optional)
+python3 easyAGI.py
+# active graphical UIUX (required)
+python3 funAGI.py
+```
+
