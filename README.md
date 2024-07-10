@@ -77,7 +77,8 @@ PYTHAI/
 ```
 
 
-# requirement
+# requirements<br />
+python > 3.7
  <a href="https://console.groq.com/docs/quickstart">groq API key</a> or <br />
  <a href="https://openai.com/index/openai-api/">openai API key</a> <br />
  
