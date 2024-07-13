@@ -1,7 +1,3 @@
-# makedecision.py 2024 (c) Gregory L. Magnusson MIT license
-# designed as extension for automindx
-# class to output decision from reasoning using internal logic and socraticreasoing with tautology and modus ponen
-
 import logging
 import os
 import pathlib
@@ -56,13 +52,13 @@ class LogicTables:
         # General log file for mindx
         file_handler_mindx = logging.FileHandler(f'{general_log_dir}/decisionlog.txt')
         file_handler_mindx.setLevel(logging.DEBUG)
-        file_formatter_mindx = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_formatter_mindx = logging.Formatter('%(asctime)s - %(name)s - %(levellevelname)s - %(message)s')
         file_handler_mindx.setFormatter(file_formatter_mindx)
 
         # Log file for memory/decisions
         file_handler_memory = logging.FileHandler(f'{memory_log_dir}/decisionlog.txt')
         file_handler_memory.setLevel(logging.DEBUG)
-        file_formatter_memory = logging.Formatter('%(asctime)s - %(name)s - %(levellevel)s - %(message)s')
+        file_formatter_memory = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         file_handler_memory.setFormatter(file_formatter_memory)
 
         self.logger.addHandler(file_handler_mindx)
@@ -102,7 +98,7 @@ class LogicTables:
             self.log(f"Variable {var} already exists.", level='warning')
 
     def add_expression(self, expr):
-        if expr not in self.expressions:
+        if expr not in (self.expressions):
             self.expressions.append(expr)
             self.log(f"Added expression: {expr}")
             self.output_belief(f"Added expression: {expr}")
@@ -289,6 +285,7 @@ class SocraticReasoning:
         self.decisions_dir = './mindx/decisions'
         self.max_tokens = 100
         self.max_premises = 5
+        self.limit_premises = False
         self.chatter = chatter
         self.logic_tables = LogicTables()
         self.dialogue_history = []
@@ -357,12 +354,10 @@ class SocraticReasoning:
             self.log_not_premise(f'Removed equivalent premise: {p}')
         self.save_premises()
 
-    def generate_premises_and_conclusion(self, enable_additional_premises=True, max_premises=None):
-        if max_premises is None:
-            max_premises = self.max_premises
+    def generate_premises_and_conclusion(self, enable_additional_premises=True):
         current_premise = self.premises[0]
         additional_premises_count = 0
-        while enable_additional_premises and additional_premises_count < max_premises:
+        while enable_additional_premises and (not self.limit_premises or additional_premises_count < self.max_premises):
             new_premise = self.generate_new_premise(current_premise)
             if not self.parse_statement(new_premise):
                 continue
@@ -385,10 +380,10 @@ class SocraticReasoning:
                 self.log_not_premise('Invalid conclusion. Generating more premises.', level='error')
         return self.logical_conclusion
 
-    def draw_conclusion(self, enable_additional_premises=True, max_premises=None):
+    def draw_conclusion(self, enable_additional_premises=True):
         if not self.premises:
             return "No premises available for logic as conclusion."
-        conclusion = self.generate_premises_and_conclusion(enable_additional_premises, max_premises)
+        conclusion = self.generate_premises_and_conclusion(enable_additional_premises)
         conclusion_entry = {"premises": self.premises, "conclusion": self.logical_conclusion}
         pathlib.Path(self.premises_file).parent.mkdir(parents=True, exist_ok=True)
         with open(self.premises_file, 'w') as file:
@@ -435,13 +430,12 @@ class SocraticReasoning:
             file.write("\n")
         self.logger.info("Saved belief with structured truth: %s", structured_truth)
 
-    def make_decision(self, enable_additional_premises=True, max_premises=None):
+    def make_decision(self, enable_additional_premises=True):
         """
         Make a decision based on the logical conclusion of reasoned facts from the truth tables.
         
         Args:
             enable_additional_premises (bool): Whether to enable the generation of additional premises.
-            max_premises (int, optional): The maximum number of premises to generate. Defaults to the instance's max_premises.
         
         Returns:
             str: The decision derived from the logical reasoning process.
@@ -449,16 +443,16 @@ class SocraticReasoning:
         if not self.premises:
             return "No premises available to make a decision."
 
-        conclusion = self.generate_premises_and_conclusion(enable_additional_premises, max_premises)
+        conclusion = self.generate_premises_and_conclusion(enable_additional_premises)
 
         if self.validate_conclusion():
             decision = self.logical_conclusion
         else:
             # Additional logic and reasoning methods if initial validation fails
-            additional_premises = self.generate_additional_premises(max_premises)
+            additional_premises = self.generate_additional_premises(self.max_premises)
             for premise in additional_premises:
                 self.premises.append(premise)
-                conclusion = self.generate_premises_and_conclusion(enable_additional_premises, max_premises)
+                conclusion = self.generate_premises_and_conclusion(enable_additional_premises)
                 if self.validate_conclusion():
                     decision = self.logical_conclusion
                     break
@@ -504,7 +498,7 @@ class SocraticReasoning:
 
     def interact(self):
         while True:
-            self.socraticlogs("\nCommands: add, challenge, conclude, set_tokens, set_premises, exit")
+            self.socraticlogs("\nCommands: add, challenge, conclude, set_tokens, set_premises, set_limit, toggle_limit, exit")
             cmd = input("> ").strip().lower()
             if cmd == 'exit':
                 self.socraticlogs('Exiting Socratic Reasoning.')
@@ -532,8 +526,26 @@ class SocraticReasoning:
                 else:
                     self.socraticlogs("Invalid number of premises.", level='error')
                     self.log_not_premise("Invalid number of premises.", level='error')
+            elif cmd == 'set_limit':
+                max_premises = input("Enter the maximum number of premises: ").strip()
+                if max_premises.isdigit():
+                    self.set_max_premises(int(max_premises))
+                else:
+                    self.socraticlogs("Invalid number of premises.", level='error')
+                    self.log_not_premise("Invalid number of premises.", level='error')
+            elif cmd == 'toggle_limit':
+                self.toggle_premise_limit()
             else:
                 self.log_not_premise('Invalid command.', level='error')
+
+    def set_max_premises(self, max_premises):
+        self.max_premises = max_premises
+        self.socraticlogs(f"Set maximum premises to {max_premises}")
+
+    def toggle_premise_limit(self):
+        self.limit_premises = not self.limit_premises
+        status = "on" if self.limit_premises else "off"
+        self.socraticlogs(f"Premise limit turned {status}")
 
 # THOT class to manage various reasoning strategies
 class THOT:
@@ -549,7 +561,7 @@ class THOT:
             os.makedirs('./mindx')
         if not os.path.exists(self.thot_log_path):
             with open(self.thot_log_path, 'w') as file:
-                json.dump([], file)
+                ujson.dump([], file)
 
     def log_thot(self, thot_data):
         with open(self.thot_log_path, 'r') as file:
@@ -614,3 +626,4 @@ if __name__ == "__main__":
     decision = socratic_reasoning.make_decision(enable_additional_premises=True)
     print(f"Decision: {decision}")
     socratic_reasoning.interact()
+
