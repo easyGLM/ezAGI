@@ -382,3 +382,9 @@ def handle_javascript_response(self, msg):
     # Log the entire message for debugging purposes
     logging.debug(f"Received JavaScript response: {msg}")
 ```
+
+# Usage
+
+    Initialize OpenMind: Create an instance of the OpenMind class
+    Manage API Keys: Use add_api_key, delete_api_key, and list_api_keys to manage API keys
+    Run Main Loop: Call main_loop to start handling both internal reasoning and user input
