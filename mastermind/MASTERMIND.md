@@ -1,8 +1,9 @@
 # MASTERMIND.md
 Overview
 
-The mastermind folder within the easyAGI project serves as the core orchestration module, managing various agents and ensuring they operate cohesively to achieve the AGI's goals. It coordinates the lifecycle of agents, integrates reasoning capabilities, and monitors system health.
-mastermind.py
+The mastermind folder within the easyAGI project serves the core orchestration modules, managing various agents and ensuring they operate cohesively to achieve the AGI's goals. mastermind coordinates the lifecycle of agents, integrates reasoning capabilities, and monitors system health.
+
+# mastermind.py
 
 The mastermind.py module is the central orchestrator for agency within the easyAGI framework. It manages agent lifecycles, monitors system health, and integrates components to ensure smooth operations.
 
