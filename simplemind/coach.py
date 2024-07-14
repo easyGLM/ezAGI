@@ -1,3 +1,5 @@
+# coach.py (c) 2024 Gregory L. Magnusson MIT licence
+# trainer for SimpleMind neural network
 import os
 import json
 import logging
