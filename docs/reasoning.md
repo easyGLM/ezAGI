@@ -2,7 +2,7 @@
 # Reasoning Module Documentation
 
 ## Overview
-The `reasoning.py` module is fundamental to the funAGI project, responsible for logical deduction and problem-solving. It encapsulates the system's ability to reason, make decisions, and solve complex problems based on a set of rules, data, and logical processes.
+The `reasoning.py` module is fundamental to the easyAGI project, responsible for logical deduction and problem-solving. It encapsulates the system's ability to reason, make decisions, and solve complex problems based on a set of rules, data, and logical processes.
 
 ## Features
 - **Logical Reasoning**: Implements various forms of logical reasoning, including deductive, inductive, and abductive reasoning, to solve problems and make decisions.
@@ -27,4 +27,4 @@ class Reasoner:
 To use the Reasoning module, import it into your project, define the set of rules and facts relevant to your domain, and instantiate the `Reasoner` class. Utilize the `deduce` method to apply logical reasoning and solve problems or make decisions.
 
 ## Conclusion
-The `reasoning.py` module is an indispensable part of the funAGI framework, providing the necessary logic and reasoning capabilities to tackle complex problems and make informed decisions. Its integration enhances the system's analytical power and decision-making accuracy.
+The `reasoning.py` module is an indispensable part of the easyAGI framework, providing the necessary logic and reasoning capabilities to tackle complex problems and make informed decisions. Its integration enhances the system's analytical power and decision-making accuracy.
