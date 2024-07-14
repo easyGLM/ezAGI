@@ -1,13 +1,13 @@
 # SimpleCoder.py (c) 2024 Gregory L. Magnusson MIT licence
-# coding agent with reasoning from bdi
-# access to internatl reasoning through agi
+# access to internat reasoning through automind.agi
+# coding agent with reasoning from automindx.bdi
 
 import json
 import logging
 from api import APIManager
 from memory import create_memory_folders, store_in_stm, DialogEntry
-from agi import AGI
-from bdi import Belief, Desire, Intention, BDIModel
+from automind.agi import AGI
+from automindx.bdi import Belief, Desire, Intention, BDIModel
 
 class SimpleCoder:
     def __init__(self):
