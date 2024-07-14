@@ -1,7 +1,7 @@
 # Socratic Module Documentation
 
 ## Overview
-The `SocraticReasoning.py` module embodies the Socratic method's principles, emphasizing critical thinking and a questioning approach. It facilitates deep analytical discussions and problem-solving within the funAGI framework by generating questions that explore complex ideas and uncover underlying assumptions.
+The `SocraticReasoning.py` module embodies the Socratic method's principles, emphasizing critical thinking and a questioning approach. It facilitates deep analytical discussions and problem-solving within the easyAGI framework by generating questions that explore complex ideas and uncover underlying assumptions.
 
 ## Features
 - **Question Generation**: Dynamically generates questions based on the given context or subject matter, encouraging a deeper exploration and understanding.
@@ -54,4 +54,4 @@ The draw_conclusion method in the SocraticReasoning class processes the premises
 To leverage the Socratic module, import it into your project, instantiate the `SocraticQuestioner` with the relevant topics, and utilize the `generate_question` method to stimulate critical discussions.
 
 ## Conclusion
-`Socratic.py` is a fundamental aspect of the funAGI project, enhancing its analytical and problem-solving capabilities by applying the Socratic method's dialectical approach to questioning and critical thinking.
+`Socratic.py` is a fundamental aspect of the easyAGI project, enhancing its analytical and problem-solving capabilities by applying the Socratic method's dialectical approach to questioning and critical thinking.
