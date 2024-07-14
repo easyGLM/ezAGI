@@ -15,7 +15,7 @@ PYTHAI/
 │   │   ├── mastermind/  # code for masterind orchestrator of agency
 │   │   ├── automind/  # code for reasoning as automind
 │   │   ├── automindx/  # automind agency environment
-│   │   │   ├── SimpleCoder/  # simple coding agent with bash, python and markdown skills
+│   │   │   ├── SimpleCoder/  # simple coding agent with bash, python and markdown agent generation
 │   │   │   └── ez/  # easy action event controller
 │   │   ├── mindX/  # Core functionalities for the MindX submodule.
 │   │   │   ├── intr/  # internal reasoning
@@ -53,7 +53,7 @@ PYTHAI/
 │   └── evaluation/  # evaluation scripts.
 ├── configs/  # configuration files for different components.
 │   ├── database/  # database configuration files.
-│   ├── models/  # model-specific configuration files.
+│   ├── RAGE/  # retrieval augmented gerative engine including model-specific configuration files.
 │   └── application/  # application configuration files.
 ├── tests/  # tests for ensuring code quality and functionality.
 │   ├── integration/  # Integration tests.
@@ -88,13 +88,13 @@ python > 3.7<br />
  # INSTALL
 
 ```bash
-git clone https://github.com/pythaiml/funAGI/
-cd funAGI
+git clone https://github.com/easyGLM/easyAGI/
+cd easyAGI
 python3 -m venv agi
 source agi/bin/activate
 pip install -r requirements.txt
 # activate command line interaction (useful as coding agent)
-python3 funAGIcli.py
+python3 easyAGIcli.py
 # activate easyAGI.py with internal reasoning (EXPERIMENTAL)
 python3 easyAGI.py
 ```
