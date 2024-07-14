@@ -1,4 +1,7 @@
-# SimpleCoder.py
+# SimpleCoder.py (c) 2024 Gregory L. Magnusson MIT licence
+# coding agent with reasoning from bdi
+# access to internatl reasoning through agi
+
 import json
 import logging
 from api import APIManager
