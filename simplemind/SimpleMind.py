@@ -1,3 +1,7 @@
+# SimpleMind.py (c) 2024 Gregory L. Magnusson MIT licence
+# minimalistic neural network in JAX
+# creates long term memory adaptation as learning for easyAGI
+
 import os
 import jax.numpy as jnp
 import jax.random as random
