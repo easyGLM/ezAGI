@@ -99,3 +99,80 @@ python3 easyAGIcli.py
 python3 easyAGI.py
 ```
 
+The easyAGI project is an augmented intelligence system designed to provide human-like reasoning and decision-making as output from exiting LLM. 
+
+
+MASTERMIND
+
+    Purpose: Acts as the central controller of the entire system.
+    Functions:
+        Automatically sets up necessary configurations.
+        Manages different AI agents, ensuring they work together smoothly.
+        Monitors system health and triggers self-repair actions if something goes wrong.
+
+SimpleCoder
+
+    Purpose: An AI agent that can write code in multiple programming languages.
+    Functions:
+        Generates code snippets for tasks like "Hello, World!" in languages such as Python, JavaScript, and more.
+        Keeps a log of its activities for transparency and tracking.
+
+BDI (Belief-Desire-Intention)
+
+    Purpose: Implements a model to simulate human-like reasoning.
+    Functions:
+        Manages beliefs (what the AI knows), desires (goals the AI wants to achieve), and intentions (plans to achieve those goals).
+        Provides detailed logging to track its reasoning process.
+
+Self-Healing
+
+    Purpose: Maintains the health of the AI system.
+    Functions:
+        Regularly checks CPU, memory, and disk usage.
+        Can restart services or the entire system if needed to fix issues.
+        Frees up disk space by removing unnecessary files.
+
+Reasoning
+
+    Purpose: Provides various logical reasoning strategies to support decision-making.
+    Functions:
+        Uses different types of reasoning like deductive (specific conclusions from general premises), inductive (general conclusions from specific observations), and more.
+        Helps the AI make informed decisions based on logic and evidence.
+
+LogicTables
+
+    Purpose: Manages logical variables and expressions to support reasoning.
+    Functions:
+        Adds and manages logical statements.
+        Generates truth tables to evaluate the validity of logical expressions.
+        Stores valid conclusions for future reference.
+
+SimpleMind
+
+    Purpose: A minimalistic neural network designed for learning and long-term memory.
+    Functions:
+        Configurable neural network that can be trained on new data.
+        Uses JAX for efficient mathematical computations.
+        Supports parallel training to speed up the learning process.
+
+Coach
+
+    Purpose: Trains the SimpleMind neural network using stored beliefs.
+    Functions:
+        Loads and preprocesses beliefs from memory.
+        Trains the neural network and saves the model for future use.
+        Logs training sessions and results for transparency.
+
+Integration
+
+The easyAGI project integrates all these components under the MASTERMIND orchestrator, ensuring they work together seamlessly. Here’s how it works:
+
+    Initialization: MASTERMIND sets up the system and loads different AI agents like SimpleCoder.
+    Execution: Agents perform tasks such as writing code or making logical decisions.
+    Monitoring: The system’s health is continuously checked, and self-repair actions are taken if necessary.
+    Learning: The SimpleMind neural network is trained on stored data to improve its performance over time.
+    Decision-Making: Using logical reasoning and validated truths, the AI system makes informed decisions.
+
+
+easyAGI is a comprehensive Augmented Intelligence framework capable of reasoning, decision-making, self-healing, and learning capabilities providing an advanced and autonomous system. easyAGI is designed to simulate human-like intelligence and operate reliably, making it a powerful tool for various applications.
+
