@@ -1,5 +1,5 @@
 # make_decision.py (c) 2024 Gregory L. Magnusson
-# reasoning to generate a decision from a conclusion
+# reasoning from a premise to a conclusion to make decision
 import logging
 import os
 import pathlib
