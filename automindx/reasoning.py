@@ -1,3 +1,6 @@
+# reasoning.py (c) Gregory L. Magnusson
+# a philosphical disertation in python
+
 class Proposition:
     def __init__(self, statement):
         self.statement = statement
