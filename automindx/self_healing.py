@@ -1,3 +1,5 @@
+# self_healing.py (c) 2024 Gregory L. Magnusson MIT license
+# AGI awareness as self correction
 import logging
 import time
 import traceback
