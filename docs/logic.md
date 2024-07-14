@@ -2,7 +2,7 @@
 # Logic Module Documentation
 
 ## Overview
-The `logic.py` module is integral to the funAGI project, providing the foundational framework for formal logic systems and operations. It enables the system to structure its reasoning processes, ensuring clear, consistent, and logical decision-making throughout the project.
+The `logic.py` module is integral to the easyAGI project, providing the foundational framework for formal logic systems and operations. It enables the system to structure its reasoning processes, ensuring clear, consistent, and logical decision-making throughout the project.
 
 ## Features
 - **Logical Operations**: Implements fundamental logical operations such as AND, OR, NOT, and implications, facilitating complex logical reasoning.
@@ -216,7 +216,7 @@ if __name__ == '__main__':
         print(truth)
 ```
 
-This example demonstrates how to use the LogicTables class to add variables and expressions, generate and display a truth table, and validate logical expressions. For a deeper understanding of the funAGI workflow visit <a href="https://rage.pythai.net/logictables-module-documentation/">logictables</a>
+This example demonstrates how to use the LogicTables class to add variables and expressions, generate and display a truth table, and validate logical expressions. For a deeper understanding of the easyAGI workflow visit <a href="https://rage.pythai.net/logictables-module-documentation/">logictables</a>
 
 
 
