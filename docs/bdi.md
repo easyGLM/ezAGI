@@ -2,7 +2,7 @@
 # BDI Module Documentation
 
 ## Overview
-The `bdi.py` module is fundamental to the funAGI project, implementing the Belief-Desire-Intention (BDI) model. This model is central to the functioning of autonomous agents, enabling them to hold beliefs about the world, have desires representing objectives, and form intentions to achieve these desires through planned actions.
+The `bdi.py` module is fundamental to the easyAGI project, implementing the Belief-Desire-Intention (BDI) model. This model is central to the functioning of autonomous agents, enabling them to hold beliefs about the world, have desires representing objectives, and form intentions to achieve these desires through planned actions. BDI is a component of automindx and SimpleCoder orchestrated by MASTERMIND
 
 ## Features
 - **Belief Management**: Manages the agent's beliefs about the world, including facts, data, and perceptions, allowing for an informed understanding of the environment.
@@ -37,4 +37,4 @@ class BDIModel:
 To leverage the BDI module, incorporate it into your agent's architecture, ensuring that it can manage its beliefs, desires, and intentions effectively. Utilize the `BDIModel` class to represent and update the agent's mental state, guiding its autonomous behavior.
 
 ## Conclusion
-The `bdi.py` module is a fundamental component of the funAGI project, equipping agents with the necessary cognitive framework to operate autonomously and intelligently. Its implementation of the BDI model facilitates complex reasoning, planning, and adaptive action within diverse environments.
+The `bdi.py` module is a fundamental component of the easyAGI project, equipping agents with the necessary cognitive framework to operate autonomously and intelligently. Its implementation of the BDI model facilitates complex reasoning, planning, and adaptive action within diverse environments.
