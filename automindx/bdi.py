@@ -1,3 +1,5 @@
+# bdi.py (c) 2024 Gregory L. Magnusson MIT license
+# belief desire intention goal reward
 import logging
 from logic import LogicTables
 from SocraticReasoning import SocraticReasoning
