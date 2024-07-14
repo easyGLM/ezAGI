@@ -1,5 +1,6 @@
-# easyAGI (c) PYTHAI augmented generative intelligence<br />
-# framework for enhancing LLM with reasoning
+# easyAGI (c) 2024 PYTHAI 
+# Augmented Generative Intelligence<br />
+# a framework for enhancing LLM with reasoning
 
 ```csharp
 PYTHAI/
