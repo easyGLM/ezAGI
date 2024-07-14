@@ -1,4 +1,5 @@
-# mastermind.py
+# mastermind.py (c) 2024 Gregory L. Magnusson MIT licence
+# mastermind provides orchestration for agency
 
 import os
 import json
