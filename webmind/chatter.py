@@ -4,6 +4,8 @@
 
 import openai
 from groq import Groq
+import subprocess
+import asyncio
 import logging
 
 class GPT4o:
