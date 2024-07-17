@@ -27,14 +27,6 @@ Registers an agent with the controller. The agent must implement a handleEvent m
 ```javascript
 async handleEvent(eventType, eventData)
 ```
-GPT
-
-Certainly! Below is a verbose and detailed external documentation for ez.js, covering all aspects, including class methods, event handling, agent registration, and usage examples.
-ez.js Documentation
-Overview
-
-The ez.js library provides a flexible and extendable framework for managing event handling, agent registration, and event broadcasting. It is designed to handle various events efficiently while allowing agents to act autonomously and extend the controller's functionality as needed.
-
 # ActionEventController
 
 The ActionEventController class is the core component of ez.js. It manages event handlers, registers agents, and broadcasts events to registered agents.
