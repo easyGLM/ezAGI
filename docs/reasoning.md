@@ -306,4 +306,4 @@ class Reasoner:
 ## Integration Guide
 To use the Reasoning module, import it into your project, define the set of rules and facts relevant to your domain, and instantiate the `Reasoner` class. Utilize the `deduce` method to apply logical reasoning and solve problems or make decisions.
 
-The `reasoning.py` module is an indispensable part of the easyAGI framework, providing the necessary logic and reasoning capabilities to tackle complex problems and make informed decisions. Its integration enhances the system's analytical power and decision-making accuracy.
+The `reasoning.py` module will become ann indispensable part of the easyAGI framework as these advanced reasoning techniques are further implemented in code, providing the necessary logic and reasoning capabilities to tackle complex problems and make informed decisions. Its integration enhances the system's analytical power and decision-making accuracy.
