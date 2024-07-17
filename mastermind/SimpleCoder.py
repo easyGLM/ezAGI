@@ -1,5 +1,6 @@
 # SimpleCoder.py (c) 2024 Gregory L. Magnusson MIT license
 # Access to reasoning from automind.agi and automindx.bdi
+# extends mastermind with ./mindx/agency
 
 import json
 import logging
