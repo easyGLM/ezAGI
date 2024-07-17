@@ -1,5 +1,5 @@
-# funAGIcli.py (c) 2024  Gregory L. Magnusson MIT licence
-# fundamental AGI terminal interaction for internal reasoning loop
+# easyAGIcli.py (c) 2024  Gregory L. Magnusson MIT licence
+# fundamental AGI terminal interaction with internal reasoning loop
 import openai
 import logging
 from memory.memory import create_memory_folders, store_in_stm, DialogEntry
