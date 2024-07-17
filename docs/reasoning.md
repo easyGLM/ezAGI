@@ -8,8 +8,6 @@ In the quest to bridge the gap between classical philosophy and modern augmented
 
 # Proposition: The Fundamental Unit of Thought
 
-Philosophical Background
-
 In philosophy, a proposition is a declarative sentence that can be either true or false. Propositions are essential for constructing logical arguments and are foundational in the study of logic, as emphasized by philosophers like Bertrand Russell and Ludwig Wittgenstein.
 
 # Implementation
