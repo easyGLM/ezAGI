@@ -1,11 +1,12 @@
 # bdi.py (c) 2024 Gregory L. Magnusson MIT license
-# belief desire intention goal reward
+# Belief, Desire, Intention (BDI) Model with Goal and Reward
+
 import logging
-from ..automind.logic import LogicTables
-from ..automind.SocraticReasoning import SocraticReasoning
-from ..memory.memory import store_in_stm, DialogEntry
-from ..webmind.chatter import GPT4o
-from ..webmind.api import APIManager
+from automind.logic import LogicTables
+from automind.SocraticReasoning import SocraticReasoning
+from memory.memory import store_in_stm, DialogEntry
+from webmind.chatter import GPT4o
+from webmind.api import APIManager
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
