@@ -1,4 +1,4 @@
-# easyAGI (c) 2024 PYTHAI
+# ezAGI (c) 2024 PYTHAI
 # Augmented Generative Intelligence<br />
 # a framework for enhancing LLM with reasoning
 
@@ -10,7 +10,7 @@ PYTHAI/
 │   ├── user_guides/  # guides for end-users and UIUX integration
 │   └── tutorials/  # step-by-step tutorials for various functionalities.
 ├── src/  # Source code for all submodules and main functionalities.
-│   ├── easyAGI/  # contains submodules and features specific to EasyAGI.
+│   ├── ezAGI/  # contains submodules and features specific to EasyAGI.
 │   │   ├── simplemind/  # code for the SimpleMind neural network and coach trainer
 │   │   ├── mastermind/  # code for masterind orchestrator of agency
 │   │   ├── automind/  # code for reasoning as automind
@@ -88,16 +88,16 @@ python > 3.7<br />
  # INSTALL
 
 ```bash
-git clone https://github.com/easyGLM/easyAGI/
-cd easyAGI
+git clone https://github.com/easyGLM/ezAGI/
+cd ezAGI
 python3 -m venv agi
 source agi/bin/activate
 pip install -r requirements.txt
-# activate easyAGI.py with internal reasoning (EXPERIMENTAL)
-python3 easyAGI.py
+# activate ezAGI.py with internal reasoning (EXPERIMENTAL)
+python3 ezAGI.py
 ```
 
-The easyAGI project is an augmented intelligence system designed to provide human-like reasoning and decision-making as output from exiting LLM. 
+The ezAGI project is an augmented intelligence system designed to provide human-like reasoning and decision-making as output from exiting LLM. 
 
 
 MASTERMIND
@@ -163,7 +163,7 @@ Coach
 
 Integration
 
-The easyAGI project integrates all these components under the MASTERMIND orchestrator, ensuring they work together seamlessly. Here’s how it works:
+The ezAGI project integrates all these components under the MASTERMIND orchestrator, ensuring they work together seamlessly. Here’s how it works:
 
     Initialization: MASTERMIND sets up the system and builds agents using SimpleCoder
     Execution: Agents perform tasks such as writing code or making logical decisions
@@ -172,5 +172,5 @@ The easyAGI project integrates all these components under the MASTERMIND orchest
     Decision-Making: Using logical reasoning and validated truths, the AI system makes informed decisions
 
 
-easyAGI is a comprehensive Augmented Intelligence framework capable of reasoning, decision-making, self-healing, and learning capabilities providing an advanced and autonomous system. easyAGI is designed to simulate human-like intelligence and operate reliably, making it a powerful tool for various applications.
+ezAGI is a comprehensive Augmented Intelligence framework capable of reasoning, decision-making, self-healing, and learning capabilities providing an advanced and autonomous system. easyAGI is designed to simulate human-like intelligence and operate reliably, making it a powerful tool for various applications.
 
