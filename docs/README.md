@@ -220,7 +220,7 @@ from mixtral using groq produced this reasonable response for meeting AGI framew
 ########################################################################################################################################################################
  welcome to easy Augmented Generative Intelligence easyAGI.py point of departure version breaking changes v5.2
 
-# Deployment creates a UIUX with internal reasoning from openmind integrated a groq, openai or LLama3
+# Deployment creates a UIUX with internal reasoning
  
 git clone https://github.com/easyGLM/easyAGI/
 cd easyAGI
