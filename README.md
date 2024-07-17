@@ -9,12 +9,12 @@ PYTHAI/
 │   ├── technical_docs/  # technical documentation for developers
 │   ├── user_guides/  # guides for end-users and UIUX integration
 │   └── tutorials/  # step-by-step tutorials for various functionalities.
-├── src/  # Source code for all submodules and main functionalities.
+├── https://github.com/easyGLM/ezAGI/  # Source code for all submodules and main functionalities.
 │   ├── ezAGI/  # contains submodules and features specific to EasyAGI.
-│   │   ├── simplemind/  # code for the SimpleMind neural network and coach trainer
-│   │   ├── mastermind/  # code for masterind orchestrator of agency
-│   │   ├── automind/  # code for reasoning as automind
-│   │   ├── automindx/  # automind agency environment
+│   │   ├── simplemind/  # code for the SimpleMind.py neural network and coach.py trainer
+│   │   ├── mastermind/  # code for masterind.py and controller.py for orchestrator of agency
+│   │   ├── automind/  # code for reasoning from automind.py
+│   │   ├── automindx/  # automind agency environment for advanced reasoning technigues
 │   │   │   ├── SimpleCoder/  # simple coding agent with bash, python and markdown agent generation
 │   │   │   └── ez/  # easy action event controller
 │   │   ├── mindX/  # Core functionalities for the MindX submodule.
