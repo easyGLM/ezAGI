@@ -1,4 +1,5 @@
 # automind.py (c) 2024 Gregory L. Magnusson MIT license
+# draw_conclusion from perceive_environment(self)
 import logging
 from memory.memory import create_memory_folders, store_in_stm, DialogEntry
 from automind.agi import AGI
@@ -41,7 +42,7 @@ class FundamentalAGI:
         """
         prompt input as perception
         """
-        agi_prompt = input("")
+        agi_prompt = input("") # open prompt for openmind
         return agi_prompt
 
     def communicate_response(self, conclusion):
