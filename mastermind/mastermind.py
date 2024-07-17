@@ -9,9 +9,9 @@ from abc import ABC
 from typing import Dict, Type, Union, Any
 import psutil
 from datetime import datetime
-from bdi import Belief, Desire, Intention, BDIModel
-from self_healing import resilient_function, monitor_system_health, perform_self_healing_procedure
-from memory import create_memory_folders, store_in_stm, DialogEntry
+from ..automindx.bdi import Belief, Desire, Intention, BDIModel
+from ..automindx.self_healing import resilient_function, monitor_system_health, perform_self_healing_procedure
+from ..memory.memory import create_memory_folders, store_in_stm, DialogEntry
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
