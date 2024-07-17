@@ -131,7 +131,7 @@ class LogicTables:
             },
             "timestamp": timestamp
         }
-        truth_file = f"{truth_path}/{timestamp}_truth.json"
+        truth_file = f"{truth_path}/{truth_data['timestamp']}_truth.json"
         with open(truth_file, 'w') as file:
             ujson.dump(truth_data, file)
         self.log(f"Stored truth: {truth_data}", level='info')
@@ -608,12 +608,19 @@ def create_memory_folders():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    # Placeholder for the chatter model; replace with actual model instantiation
-    class DummyChatter:
-        def generate_response(self, prompt):
-            return "Dummy response based on: " + prompt
+    # Instantiate the chatter models
+    api_manager = APIManager()
+    openai_key = api_manager.get_api_key('openai')
+    groq_key = api_manager.get_api_key('groq')
+    ollama = OllamaModel()
 
-    chatter = DummyChatter()
+    if openai_key:
+        chatter = GPT4o(openai_key)
+    elif groq_key:
+        chatter = GroqModel(groq_key)
+    else:
+        chatter = ollama  # Default to Ollama if no other API keys are available
+
     socratic_reasoning = SocraticReasoning(chatter)
     
     # Example premises
