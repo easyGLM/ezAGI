@@ -1,4 +1,4 @@
-ez.js
+# ez.js (c) 2024 codephreak MIT licence
 
 The ez.js library provides a flexible and extendable framework for managing event handling, agent registration, and event broadcasting. It is designed to handle various events efficiently while allowing agents to act autonomously and extend the controller's functionality as needed.
 
