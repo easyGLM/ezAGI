@@ -1,11 +1,17 @@
 # make_decision.py (c) 2024 Gregory L. Magnusson
-# reasoning from a premise to draw_conclusion to make_decision
+# Reasoning from a premise to draw_conclusion to make_decision
 import logging
 import os
 import pathlib
 import ujson
 from datetime import datetime
 import itertools
+from epistemic import AutoepistemicAgent  # Importing AutoepistemicAgent from epistemic.py
+from fuzzy import FuzzyLogic  # Importing FuzzyLogic from fuzzy.py
+from nonmonotonic import NonmonotonicReasoning  # Importing NonmonotonicReasoning from nonmonotonic.py
+from bdi import Belief, Desire, Intention, Goal, Reward  # Importing BDI classes
+from webmind.chatter import GPT4o, GroqModel, OllamaModel
+from webmind.api import APIManager
 
 # Proposition class to handle logical statements
 class Proposition:
@@ -15,26 +21,22 @@ class Proposition:
     def __str__(self):
         return self.statement
 
-# Various reasoning strategies
-class DeductiveReasoning:
-    @staticmethod
-    def reason(p, q):
-        conclusion = Proposition(f"Therefore, {q.statement.split(' ')[1]} is {p.statement.split(' ')[-1]}.")
-        return f"Deductive Reasoning:\n{p}\n{q}\n{conclusion}\n"
-
-class InductiveReasoning:
-    @staticmethod
-    def reason(observations):
-        conclusion = Proposition("Therefore, all X are Y.")
-        observations_str = '\n'.join(str(obs) for obs in observations)
-        return f"Inductive Reasoning:\n{observations_str}\n{conclusion}\n"
-
 class Reasoning:
-    def deductive_reasoning(self, p, q):
-        return DeductiveReasoning.reason(p, q)
+    def __init__(self):
+        self.epistemic_agent = AutoepistemicAgent([], [])  # Initialize with empty beliefs and rules
+        self.fuzzy_logic = FuzzyLogic()
+        self.nonmonotonic_reasoning = NonmonotonicReasoning()
 
-    def inductive_reasoning(self, observations):
-        return InductiveReasoning.reason(observations)
+    def epistemic_reasoning(self, new_information):
+        self.epistemic_agent.add_information(new_information)
+        self.epistemic_agent.revise_beliefs()
+        return self.epistemic_agent.beliefs
+
+    def fuzzy_reasoning(self, variables, rules):
+        return self.fuzzy_logic.evaluate(variables, rules)
+
+    def nonmonotonic_reasoning(self, premises):
+        return self.nonmonotonic_reasoning.reason(premises)
 
 # LogicTables class for managing logical variables, expressions, and truth tables
 class LogicTables:
@@ -100,7 +102,7 @@ class LogicTables:
             self.log(f"Variable {var} already exists.", level='warning')
 
     def add_expression(self, expr):
-        if expr not in (self.expressions):
+        if expr not in self.expressions:
             self.expressions.append(expr)
             self.log(f"Added expression: {expr}")
             self.output_belief(f"Added expression: {expr}")
@@ -272,7 +274,7 @@ class SocraticReasoning:
         self.socraticlogs_file = './mindx/decisions/socraticdecisionlogs.txt'
         file_handler = logging.FileHandler(self.socraticlogs_file)
         file_handler.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levellevelname)s - %(message)s')
         file_handler.setFormatter(file_formatter)
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.CRITICAL)
@@ -576,9 +578,7 @@ class THOT:
         combined_results = []
         for reasoner in self.reasoners:
             try:
-                if reasoner == DeductiveReasoning:
-                    result = reasoner.reason(proposition_p, proposition_q)
-                elif reasoner == InductiveReasoning:
+                if reasoner == NonmonotonicReasoning:
                     result = reasoner.reason([proposition_p, proposition_q])
                 else:
                     result = reasoner.reason(proposition_p, proposition_q)
@@ -628,4 +628,3 @@ if __name__ == "__main__":
     decision = socratic_reasoning.make_decision(enable_additional_premises=True)
     print(f"Decision: {decision}")
     socratic_reasoning.interact()
-
