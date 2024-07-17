@@ -2,10 +2,10 @@
 # fundamental AGI terminal interaction with internal reasoning loop
 import openai
 import logging
-from memory.memory import create_memory_folders, store_in_stm, DialogEntry
-from agi import AGI
-from api import APIManager
-from chatter import GPT4o, GroqModel
+from ..memory.memory import create_memory_folders, store_in_stm, DialogEntry
+from ..automind.agi import AGI
+from ..webmind.api import APIManager
+from ..webmind.chatter import GPT4o, GroqModel
 
 class FundamentalAGI:
     def __init__(self):
