@@ -5,7 +5,6 @@ The automind folder within the easyAGI project contains essential components tha
 
 # SocraticReasoning.py
 
-Purpose:
 The SocraticReasoning.py module implements a Socratic reasoning engine that interacts with a chatter model to add, challenge, and draw conclusions from premises. It aims to simulate a logical reasoning process, allowing the AGI to engage in structured dialogues and make informed decisions based on logical premises.
 
 Key Features:
@@ -18,7 +17,6 @@ Key Features:
 
 # agi.py
 
-Purpose:
 The agi.py file defines the AGI (Artificial General Intelligence) class, which uses Socratic reasoning to learn from data and make decisions. This file integrates various components such as the chatter model and memory management to facilitate the AGI's decision-making processes.
 
 Key Features:
@@ -30,7 +28,6 @@ Key Features:
 
 # logic.py
 
-Purpose:
 The logic.py module provides the LogicTables class, which manages logical variables, expressions, and truth tables. It evaluates logical expressions and ensures their validity, supporting the reasoning processes of the AGI.
 
 Key Features:
@@ -44,7 +41,7 @@ Key Features:
     
 # openmind.py
 
-The openmind.py module orchestrates the internal reasoning loop for continuous AGI reasoning without user interaction. It integrates with other components in the automind folder managing memory, handling API keys, and interacts with various language models (LLMs) as a modular extension of the easyAGI UIUX components. openmind simplifies interaction with the automind reasoning engine and the webmind ml compononents of the easyAGI framework
+The openmind.py module orchestrates the internal reasoning loop for continuous AGI reasoning without user interaction. openmind integrates with automind and thus agi components in the automind folder managing memory, handling API keys, and interacts with various language models (LLMs) as a modular extension of the easyAGI UIUX components. openmind simplifies interaction with the automind reasoning engine and the webmind ml compononents of the easyAGI framework to produce conclusions from internal reasoning to make_decision from Socratic Reasoning.
 
 Key Features:
 
