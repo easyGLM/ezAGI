@@ -1,5 +1,5 @@
 # openmind.py
-# openmind (c) 2024 Gregory L. Magnusson MIT licence
+# openmind.py (c) 2024 Gregory L. Magnusson MIT licence
 # internal reasoning loop for continuous AGI reasoning without user interaction
 # openmind internal reasoning as asynchronous task ensures non-blocking execution and efficient concurrency
 # modular integration of automind reasoning with memory
