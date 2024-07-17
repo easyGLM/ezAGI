@@ -1,3 +1,5 @@
+# make_decision.py (c) 2024 Gregory L. Magnusson
+# from draw_conclusion boolean controls make_decision autonomous challenge of SocraticReasoning conclusion
 import logging
 import os
 import pathlib
