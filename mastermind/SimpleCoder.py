@@ -1,21 +1,19 @@
-# SimpleCoder.py (c) 2024 Gregory L. Magnusson MIT licence
-# access to internat reasoning through automind.agi
-# coding agent with reasoning from automindx.bdi
+# SimpleCoder.py (c) 2024 Gregory L. Magnusson MIT license
+# Access to reasoning from automind.agi and automindx.bdi
 
 import json
 import logging
-from ..webmind.api import APIManager
-from ..memory.memory import create_memory_folders, store_in_stm, DialogEntry
-from ..automind.agi import AGI
-from ..automindx.bdi import Belief, Desire, Intention, BDIModel
+import os
+from webmind.api import APIManager
+from memory.memory import create_memory_folders
+from automind.agi import AGI
+from automindx.bdi import Belief, Desire, Intention, Goal, Reward
+from webmind.chatter import GPT4o, GroqModel
 
 class SimpleCoder:
     def __init__(self):
         self.name = "SimpleCoder"
-        self.supported_languages = [
-            'Python', 'JavaScript', 'Go', 'Ruby', 
-            'Bash', 'Perl', 'HTML', 'Markup', 'AIML', 'CSS', 'Three.js', 'Solidity', 'PyTeal', 'Scilla'
-        ]
+        self.supported_languages = ['Python', 'JavaScript', 'Markdown', 'Bash']
         self.activity_log = []
         self.api_manager = APIManager()
         self.agi = self.initialize_agi()
@@ -50,18 +48,8 @@ class SimpleCoder:
         code_snippets = {
             'Python': "print('Hello, World!')",
             'JavaScript': "console.log('Hello, World!');",
-            'Go': 'fmt.Println("Hello, World!")',
-            'Ruby': 'puts "Hello, World!"',
-            'Bash': 'echo "Hello, World!"',
-            'Perl': 'print "Hello, World!\\n";',
-            'HTML': '<h1>Hello, World!</h1>',
-            'Markup': '# Hello, World!',
-            'AIML': '<category><pattern>HELLO</pattern><template>World!</template></category>',
-            'CSS': '/* Hello, World! */',
-            'Three.js': 'console.log("Three.js Hello, World!");',
-            'Solidity': '/* Solidity Hello, World! */',
-            'PyTeal': '# PyTeal Hello, World!',
-            'Scilla': '(* Scilla Hello, World! *)'
+            'Markdown': '# Hello, World!',
+            'Bash': 'echo "Hello, World!"'
         }
 
         code = code_snippets.get(language, "Language not supported.")
@@ -86,84 +74,54 @@ class SimpleCoder:
         except Exception as e:
             logging.error(f"Failed to load log: {e}")
 
-class MASTERMIND:
-    def __init__(self):
-        self.agents = {}
-        self.bdi_model = BDIModel()
-        create_memory_folders()
-
-    def create_agent(self, agent_name, agent_class):
-        agent = agent_class()
-        agent.set_name(agent_name)
+    def interact_with_agency(self, action, filename=None, content=None):
+        agency_dir = './mindx/agency'
         
-        belief = input("Enter Belief: ")
-        desire = input("Enter Desire: ")
-        intention = input("Enter Intention: ")
+        # Ensure the directory exists
+        if not os.path.exists(agency_dir):
+            os.makedirs(agency_dir, exist_ok=True)
         
-        belief_obj = Belief(belief)
-        desire_obj = Desire(desire)
-        intention_obj = Intention(intention)
-        self.bdi_model.add_belief(belief_obj)
-        self.bdi_model.add_desire(desire_obj)
-        self.bdi_model.add_intention(intention_obj)
+        # Check and set permissions
+        current_permissions = oct(os.stat(agency_dir).st_mode)[-3:]
+        if current_permissions != '700':
+            os.chmod(agency_dir, 0o700)
         
-        self.agents[agent_name] = agent
+        file_path = os.path.join(agency_dir, filename) if filename else None
+        
+        if action == 'read' and file_path:
+            try:
+                with open(file_path, 'r') as f:
+                    return f.read()
+            except FileNotFoundError:
+                return "File not found."
+            except Exception as e:
+                logging.error(f"Failed to read file: {e}")
+                return "Error reading file."
 
-    def delete_agent(self, agent_name):
-        if agent_name in self.agents:
-            del self.agents[agent_name]
+        elif action == 'write' and file_path and content:
+            try:
+                with open(file_path, 'w') as f:
+                    f.write(content)
+                return "File written successfully."
+            except Exception as e:
+                logging.error(f"Failed to write file: {e}")
+                return "Error writing file."
+
+        elif action == 'execute' and file_path:
+            try:
+                result = os.system(f'bash {file_path}')
+                return f"Execution result: {result}"
+            except Exception as e:
+                logging.error(f"Failed to execute file: {e}")
+                return "Error executing file."
+
         else:
-            logging.warning(f"Agent '{agent_name}' not found.")
+            return "Invalid action or missing parameters."
 
-    def export_agent(self, agent_name, filename):
-        agent = self.agents.get(agent_name)
-        if agent:
-            agent.export_config(filename)
-        else:
-            logging.warning(f"Agent '{agent_name}' not found.")
-
-    def import_agent(self, agent_name, filename):
-        agent = self.agents.get(agent_name)
-        if agent:
-            agent.import_config(filename)
-        else:
-            logging.warning(f"Agent '{agent_name}' not found.")
-
-    def display_ui(self):
-        print("MASTERMIND Console")
-        while True:
-            print("Loaded Agents:")
-            for agent in self.agents.keys():
-                print(f" - {agent}")
-            command = input("Enter command ('help' for available commands): ")
-            if command == 'help':
-                print("Available commands: create, delete, export, import, interact, q")
-            elif command == 'q':
-                break
-            elif command == 'create':
-                agent_name = input("Enter the name of the new agent: ")
-                agent_class = SimpleCoder  # Can be extended to other agent classes
-                self.create_agent(agent_name, agent_class)
-            elif command == 'delete':
-                agent_name = input("Enter the name of the agent to delete: ")
-                self.delete_agent(agent_name)
-            elif command == 'export':
-                agent_name = input("Enter the name of the agent to export: ")
-                filename = input("Enter the filename to export to: ")
-                self.export_agent(agent_name, filename)
-            elif command == 'import':
-                agent_name = input("Enter the name of the agent to import: ")
-                filename = input("Enter the filename to import from: ")
-                self.import_agent(agent_name, filename)
-            elif command == 'interact':
-                agent_name = input("Enter the name of the agent to interact with: ")
-                agent = self.agents.get(agent_name)
-                if agent:
-                    agent.display_ui()
-                else:
-                    logging.warning(f"Agent '{agent_name}' not found.")
-
+# Example usage
 if __name__ == "__main__":
-    mastermind = MASTERMIND()
-    mastermind.display_ui()
-
+    coder = SimpleCoder()
+    coder.execute_task('Python', 'hello_world')
+    print(coder.interact_with_agency('write', 'test.sh', '#!/bin/bash\necho "Hello from agency"'))
+    print(coder.interact_with_agency('execute', 'test.sh'))
+    print(coder.interact_with_agency('read', 'test.sh'))
