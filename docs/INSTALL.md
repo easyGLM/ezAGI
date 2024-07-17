@@ -6,8 +6,6 @@ cd funAGI
 python3 -m venv agi
 source agi/bin/activate
 pip install -r requirements.txt
-# start the cli version
-python3 easyAGIcli.py
-# start the UIUX version
+# start the UIUX
 python3 easyAGI.py
 ```
