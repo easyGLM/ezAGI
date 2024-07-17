@@ -2,7 +2,7 @@
 # AUTOMIND.md
 Overview
 
-The automind folder within the easyAGI project contains essential components that enable advanced reasoning, decision-making, and logic processing for the AGI system. Below is a detailed description of the three primary files in this directory: SocraticReasoning.py, agi.py, and logic.py.
+The automind folder within the easyAGI project contains essential components that enable advanced reasoning, decision-making, and logic processing for the AGI system. Below is a detailed description of the four primary files in this directory: SocraticReasoning.py, agi.py, logic.py and openmind.py
 
 # SocraticReasoning.py
 
@@ -42,6 +42,20 @@ Key Features:
     Evaluation and Validation: Evaluates logical expressions and validates them as truths or tautologies.
     Logging: Implements detailed logging for all operations and stores logs in both general and memory-specific files.
     Output Methods: Outputs beliefs and truths to JSON files, ensuring structured storage of logical data.
+    
+# openmind.py
+
+The openmind.py module orchestrates the internal reasoning loop for continuous AGI reasoning without user interaction. It integrates with other components in the automind folder managing memory, handling API keys, and interacts with various language models (LLMs) as a modular extension of the easyAGI UIUX components. openmind simplifies interaction with the automind reasoning engine and the webmind ml compononents of the easyAGI framework
+
+Key Features:
+
+    Initialization: Sets up API managers and AGI instances, initializes memory, and prepares internal queues for handling asynchronous tasks.
+    API Key Management: Provides methods to add, delete, and list API keys, ensuring dynamic integration with different LLM services.
+    Main Loop: Implements the main asynchronous loop to handle internal reasoning and user input concurrently for continuous processing and response generation of conclusions as thoughts.
+    Reasoning Loop: Continuously processes prompts using the AGI instance and updates internal conclusions, saving these to appropriate log files.
+    Integration: Seamlessly integrates with the FundamentalAGI class for reasoning and various chatter models for handling input responses.
+    Logging: Detailed logging of internal operations, API key management, and reasoning conclusions, ensuring traceability and debugging capabilities.
+
 
 
 For each of these modules, an example usage is provided to demonstrate how the classes and methods can be utilized within the easyAGI project. These examples help in understanding the practical applications of the classes and their methods.
