@@ -1,6 +1,5 @@
 
 # AUTOMIND.md
-Overview
 
 The automind folder within the easyAGI project contains essential components that enable advanced reasoning, decision-making, and logic processing for the AGI system. Below is a detailed description of the four primary files in this directory: SocraticReasoning.py, agi.py, logic.py and openmind.py
 
