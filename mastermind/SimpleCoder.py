@@ -4,10 +4,10 @@
 
 import json
 import logging
-from api import APIManager
-from memory import create_memory_folders, store_in_stm, DialogEntry
-from automind.agi import AGI
-from automindx.bdi import Belief, Desire, Intention, BDIModel
+from ..webmind.api import APIManager
+from ..memory.memory import create_memory_folders, store_in_stm, DialogEntry
+from ..automind.agi import AGI
+from ..automindx.bdi import Belief, Desire, Intention, BDIModel
 
 class SimpleCoder:
     def __init__(self):
