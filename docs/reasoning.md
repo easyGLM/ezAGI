@@ -269,6 +269,8 @@ class DeonticReasoning:
         return f"Deontic Reasoning:\n{p}\n{q}\n{conclusion}\n"
 ```
 
+
+
 The method reasons about normative statements, addressing ethical and moral considerations.
 
 Integrating Reasoning with easyAGI
