@@ -26,6 +26,7 @@ See also <a href="https://rage.pythai.net/draw_conclusionself/">draw_conclusion(
     bdi.py: BDI (Belief-Desire-Intention) model
     logic.py: Logic table management and evaluation
     SocraticReasoning.py: Socratic Reasoning from logic
+    openmind internal asyncronous reasoning
 
         api.py: API key management
         chatter.py: Interface for different chat models
