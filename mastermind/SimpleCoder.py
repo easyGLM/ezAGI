@@ -18,6 +18,16 @@ class SimpleCoder:
         self.api_manager = APIManager()
         self.agi = self.initialize_agi()
         create_memory_folders()
+        self.agency_dir = './mindx/agency'
+        self._setup_agency_directory()
+
+    def _setup_agency_directory(self):
+        """Ensure the agency directory exists and has the correct permissions."""
+        if not os.path.exists(self.agency_dir):
+            os.makedirs(self.agency_dir, exist_ok=True)
+        current_permissions = oct(os.stat(self.agency_dir).st_mode)[-3:]
+        if current_permissions != '700':
+            os.chmod(self.agency_dir, 0o700)
 
     def initialize_agi(self):
         openai_key = self.api_manager.get_api_key('openai')
@@ -45,6 +55,10 @@ class SimpleCoder:
         if not is_valid:
             return message
         
+        # Placeholder for prompting AGI to ensure production-ready code
+        prompt = f"Generate production-ready {language} code for task: {task}. Output only the code as the solution."
+        
+        # Example code snippets for demonstration purposes
         code_snippets = {
             'Python': "print('Hello, World!')",
             'JavaScript': "console.log('Hello, World!');",
@@ -75,18 +89,7 @@ class SimpleCoder:
             logging.error(f"Failed to load log: {e}")
 
     def interact_with_agency(self, action, filename=None, content=None):
-        agency_dir = './mindx/agency'
-        
-        # Ensure the directory exists
-        if not os.path.exists(agency_dir):
-            os.makedirs(agency_dir, exist_ok=True)
-        
-        # Check and set permissions
-        current_permissions = oct(os.stat(agency_dir).st_mode)[-3:]
-        if current_permissions != '700':
-            os.chmod(agency_dir, 0o700)
-        
-        file_path = os.path.join(agency_dir, filename) if filename else None
+        file_path = os.path.join(self.agency_dir, filename) if filename else None
         
         if action == 'read' and file_path:
             try:
