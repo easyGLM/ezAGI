@@ -139,37 +139,37 @@ Reasoning
 
 LogicTables
 
-    Purpose: Manages logical variables and expressions to support reasoning.
+    Purpose: Manages logical variables and expressions to support reasoning
     Functions:
-        Adds and manages logical statements.
-        Generates truth tables to evaluate the validity of logical expressions.
-        Stores valid conclusions for future reference.
+        Adds and manages logical statements
+        Generates truth tables to evaluate the validity of logical expressions
+        Stores valid conclusions for future reference
 
 SimpleMind
 
-    Purpose: A minimalistic neural network designed for learning and long-term memory.
+    Purpose: A minimalistic neural network designed for learning and long-term memory
     Functions:
-        Configurable neural network that can be trained on new data.
-        Uses JAX for efficient mathematical computations.
-        Supports parallel training to speed up the learning process.
+        Configurable neural network that can be trained on new data
+        Uses JAX for efficient mathematical computations
+        Supports parallel training to speed up the learning process
 
 Coach
 
-    Purpose: Trains the SimpleMind neural network using stored beliefs.
+    Purpose: Trains the SimpleMind neural network using stored beliefs
     Functions:
-        Loads and preprocesses beliefs from memory.
-        Trains the neural network and saves the model for future use.
-        Logs training sessions and results for transparency.
+        Loads and preprocesses beliefs from memory
+        Trains the neural network and saves the model for future use
+        Logs training sessions and results for transparency
 
 Integration
 
 The easyAGI project integrates all these components under the MASTERMIND orchestrator, ensuring they work together seamlessly. Here’s how it works:
 
-    Initialization: MASTERMIND sets up the system and loads different AI agents like SimpleCoder.
-    Execution: Agents perform tasks such as writing code or making logical decisions.
-    Monitoring: The system’s health is continuously checked, and self-repair actions are taken if necessary.
-    Learning: The SimpleMind neural network is trained on stored data to improve its performance over time.
-    Decision-Making: Using logical reasoning and validated truths, the AI system makes informed decisions.
+    Initialization: MASTERMIND sets up the system and builds agents using SimpleCoder
+    Execution: Agents perform tasks such as writing code or making logical decisions
+    Monitoring: The system’s health is continuously checked, and self-repair actions are taken if necessary
+    Learning: The SimpleMind neural network is trained on stored data to improve its performance over time
+    Decision-Making: Using logical reasoning and validated truths, the AI system makes informed decisions
 
 
 easyAGI is a comprehensive Augmented Intelligence framework capable of reasoning, decision-making, self-healing, and learning capabilities providing an advanced and autonomous system. easyAGI is designed to simulate human-like intelligence and operate reliably, making it a powerful tool for various applications.
