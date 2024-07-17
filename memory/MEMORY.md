@@ -69,7 +69,7 @@ def store_episodic_memory(episode):
 Stores an episodic memory entry
 
 # save_valid_truth
-# to be processed as truth to learn from
+# truth to learn from
 ```python
 def save_valid_truth(valid_truth):
     ...
@@ -77,7 +77,7 @@ def save_valid_truth(valid_truth):
 Saves a valid truth entry in the truth folder.
 
 # save_conversation_memory
-# to be processed by coach for SimpleMind
+# useful for coach and SimpleMind
 ```python
 def save_conversation_memory(memory):
     ...
@@ -85,7 +85,6 @@ def save_conversation_memory(memory):
 Saves conversation input and response to the short-term memory folder
 
 # save_internal_reasoning
-# to be expressed as thought and processed by THOT
 ```python
 def save_internal_reasoning(memory):
     ...
@@ -93,7 +92,6 @@ def save_internal_reasoning(memory):
 Saves internal reasoning, including no-premise entries, to the MINDX folder
 
 # load_conversation_memory
-# to be extended by aGLM and machine_dreaming
 ```python
 def load_conversation_memory():
     ...
@@ -101,13 +99,11 @@ def load_conversation_memory():
 Loads all conversation memories from the memory folder
 
 # delete_conversation_memory
-# to be used following coach processing with SimpleMind
 ```python
 def delete_conversation_memory():
     ...
 ```
 # def get_latest_memory():
-# useful for new premise or continued reasoning event
     ...
 ```python
 def get_latest_memory():
