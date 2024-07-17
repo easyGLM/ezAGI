@@ -1,4 +1,4 @@
-# easyAGI (c) Gregory L. Magnusson MIT license 2024
+# ezAGI (c) Gregory L. Magnusson MIT license 2024
 # conversation from main_loop(self) is saved to ./memory/stm/timestampmemeory.json from memory.py creating short term memory store of input response
 # reasoning_loop(self)conversation from internal_conclusions are saved in ./memory/logs/thoughts.json
 
