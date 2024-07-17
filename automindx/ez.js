@@ -1,4 +1,4 @@
-// ez.js
+// ez.js (c) 2024 codephreak
 
 /**
  * The controller state in ez.js is a comprehensive system managing event handling, agent registration, 
