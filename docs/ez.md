@@ -34,24 +34,22 @@ ez.js Documentation
 Overview
 
 The ez.js library provides a flexible and extendable framework for managing event handling, agent registration, and event broadcasting. It is designed to handle various events efficiently while allowing agents to act autonomously and extend the controller's functionality as needed.
-Classes
-ActionEventController
+
+# ActionEventController
 
 The ActionEventController class is the core component of ez.js. It manages event handlers, registers agents, and broadcasts events to registered agents.
 Constructor
 
-javascript
-
+```javascript
 constructor()
-
+```
 Initializes the controller with default event handlers and an empty list of registered agents.
-Methods
-registerAgent
 
-javascript
+# registerAgent
 
+```javascript
 registerAgent(agent)
-
+```
 Registers an agent with the controller. The agent must implement a handleEvent method.
 
     Parameters:
@@ -60,7 +58,7 @@ Registers an agent with the controller. The agent must implement a handleEvent m
     Throws:
         Error if the agent does not implement the handleEvent method.
 
-handleEvent
+# handleEvent
 
 ```javascript
 async handleEvent(eventType, eventData)
@@ -111,6 +109,7 @@ constructor()
 async onClick(data)
 async onSubmit(data)
 registerCustomEventHandler(eventType, handler)
+```
 Initializes the agent with an instance of ActionEventController and registers itself with the controller
 Handles events broadcasted by the controller.
 
@@ -126,145 +125,8 @@ Handles submit events
 
     Parameters:
         data (Object): The data associated with the submit event
-GPT
-
-Certainly! Below is a verbose and detailed external documentation for ez.js, covering all aspects, including class methods, event handling, agent registration, and usage examples.
-ez.js Documentation
-Overview
-
-The ez.js library provides a flexible and extendable framework for managing event handling, agent registration, and event broadcasting. It is designed to handle various events efficiently while allowing agents to act autonomously and extend the controller's functionality as needed.
-Classes
-ActionEventController
-
-The ActionEventController class is the core component of ez.js. It manages event handlers, registers agents, and broadcasts events to registered agents.
-Constructor
-
-javascript
-
-constructor()
-
-Initializes the controller with default event handlers and an empty list of registered agents.
-Methods
-registerAgent
-
-javascript
-
-registerAgent(agent)
-
-Registers an agent with the controller. The agent must implement a handleEvent method.
-
-    Parameters:
-        agent (Object): The agent to be registered. Must implement a handleEvent method.
-
-    Throws:
-        Error if the agent does not implement the handleEvent method.
-
-handleEvent
-
-javascript
-
-async handleEvent(eventType, eventData)
-
-Handles an event by delegating to the appropriate event handler and broadcasting to agents.
-
-    Parameters:
-        eventType (string): The type of the event.
-        eventData (Object): The data associated with the event.
-
-    Throws:
-        Error if there is an issue handling the event.
-
-broadcastEventToAgents
-
-javascript
-
-async broadcastEventToAgents(eventType, eventData)
-
-Broadcasts an event to all registered agents.
-
-    Parameters:
-        eventType (string): The type of the event.
-        eventData (Object): The data associated with the event.
-
-onClick
-
-javascript
-
-async onClick(data)
-
-Default handler for click events.
-
-    Parameters:
-        data (Object): The data associated with the click event.
-
-onSubmit
-
-javascript
-
-async onSubmit(data)
-
-Default handler for submit events.
-
-    Parameters:
-        data (Object): The data associated with the submit event.
-
-registerEventHandler
-
-javascript
-
-registerEventHandler(eventType, handler)
-
-Registers a custom event handler.
-
-    Parameters:
-        eventType (string): The type of the event.
-        handler (function): The handler function for the event.
-
-AgentUsingEz
-
-The AgentUsingEz class demonstrates how an agent can use ez.js as the controller.
-Constructor
-
-javascript
-
-constructor()
-
-Initializes the agent with an instance of ActionEventController and registers itself with the controller.
-Methods
-handleEvent
-
-javascript
-
-async handleEvent(eventType, eventData)
-
-Handles events broadcasted by the controller.
-
-    Parameters:
-        eventType (string): The type of the event.
-        eventData (Object): The data associated with the event.
-
-async onClick(data)
-
-Handles click events.
-
-    Parameters:
-        data (Object): The data associated with the click event.
-
-async onSubmit(data)
-
-Handles submit events.
-
-    Parameters:
-        data (Object): The data associated with the submit event.
 
 
-registerCustomEventHandler(eventType, handler)
-
-Registers a custom event handler with the controller.
-
-    Parameters:
-        eventType (string): The type of the event
-        handler (function): The handler function for the event
 
 # Setting Up Event Listeners
 
