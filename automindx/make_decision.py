@@ -1,5 +1,3 @@
-# make_decision.py (c) 2024 Gregory L. Magnusson
-# Reasoning from a premise to draw_conclusion to make_decision
 import logging
 import os
 import pathlib
@@ -56,7 +54,7 @@ class LogicTables:
         # General log file for mindx
         file_handler_mindx = logging.FileHandler(f'{general_log_dir}/decisionlog.txt')
         file_handler_mindx.setLevel(logging.DEBUG)
-        file_formatter_mindx = logging.Formatter('%(asctime)s - %(name)s - %(levellevelname)s - %(message)s')
+        file_formatter_mindx = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         file_handler_mindx.setFormatter(file_formatter_mindx)
 
         # Log file for memory/decisions
@@ -131,7 +129,7 @@ class LogicTables:
             },
             "timestamp": timestamp
         }
-        truth_file = f"{truth_path}/{truth_data['timestamp']}_truth.json"
+        truth_file = f"{truth_path}/{timestamp}_truth.json"
         with open(truth_file, 'w') as file:
             ujson.dump(truth_data, file)
         self.log(f"Stored truth: {truth_data}", level='info')
@@ -434,12 +432,13 @@ class SocraticReasoning:
             file.write("\n")
         self.logger.info("Saved belief with structured truth: %s", structured_truth)
 
-    def make_decision(self, enable_additional_premises=True):
+    def make_decision(self, enable_additional_premises=True, autonomous=True):
         """
         Make a decision based on the logical conclusion of reasoned facts from the truth tables.
         
         Args:
             enable_additional_premises (bool): Whether to enable the generation of additional premises.
+            autonomous (bool): Whether the decision-making process should be autonomous.
         
         Returns:
             str: The decision derived from the logical reasoning process.
@@ -449,20 +448,31 @@ class SocraticReasoning:
 
         conclusion = self.generate_premises_and_conclusion(enable_additional_premises)
 
-        if self.validate_conclusion():
-            decision = self.logical_conclusion
-        else:
-            # Additional logic and reasoning methods if initial validation fails
-            additional_premises = self.generate_additional_premises(self.max_premises)
-            for premise in additional_premises:
-                self.premises.append(premise)
-                conclusion = self.generate_premises_and_conclusion(enable_additional_premises)
-                if self.validate_conclusion():
-                    decision = self.logical_conclusion
+        while True:
+            if self.validate_conclusion():
+                decision = self.logical_conclusion
+            else:
+                # Additional logic and reasoning methods if initial validation fails
+                additional_premises = self.generate_additional_premises(self.max_premises)
+                for premise in additional_premises:
+                    self.premises.append(premise)
+                    conclusion = self.generate_premises_and_conclusion(enable_additional_premises)
+                    if self.validate_conclusion():
+                        decision = self.logical_conclusion
+                        break
+                else:
+                    self.socraticlogs('Failed to validate the conclusion using existing and additional premises.', level='error')
+                    decision = "Unable to make a decision based on the current premises."
+
+            if autonomous:
+                # Autonomous challenge of decision
+                if not self.validate_conclusion():
+                    new_premise = self.generate_new_premise(self.logical_conclusion)
+                    self.add_premise(new_premise)
+                else:
                     break
             else:
-                self.socraticlogs('Failed to validate the conclusion using existing and additional premises.', level='error')
-                decision = "Unable to make a decision based on the current premises."
+                break
 
         self.socraticlogs(f"Decision made: {decision}", level='info')
 
@@ -608,18 +618,20 @@ def create_memory_folders():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    # Instantiate the chatter models
+    # Actual Chatter model instantiation
     api_manager = APIManager()
     openai_key = api_manager.get_api_key('openai')
     groq_key = api_manager.get_api_key('groq')
-    ollama = OllamaModel()
+    ollama = api_manager.get_api_key('ollama')
 
     if openai_key:
         chatter = GPT4o(openai_key)
     elif groq_key:
         chatter = GroqModel(groq_key)
+    elif ollama:
+        chatter = OllamaModel()
     else:
-        chatter = ollama  # Default to Ollama if no other API keys are available
+        raise ValueError("No valid API key found for chatter model")
 
     socratic_reasoning = SocraticReasoning(chatter)
     
@@ -632,6 +644,6 @@ if __name__ == "__main__":
     for statement in statements:
         socratic_reasoning.add_premise(statement)
     
-    decision = socratic_reasoning.make_decision(enable_additional_premises=True)
+    decision = socratic_reasoning.make_decision(enable_additional_premises=True, autonomous=True)
     print(f"Decision: {decision}")
     socratic_reasoning.interact()
