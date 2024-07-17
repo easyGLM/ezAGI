@@ -54,4 +54,4 @@ Key Features:
 
 
 
-For each of these modules, an example usage is provided to demonstrate how the classes and methods can be utilized within the easyAGI project. These examples help in understanding the practical applications of the classes and their methods ensuring seemless modular expansion for the easyAGI framework.
+each module provides example usage to demonstrate how classes and methods can be utilized within the easyAGI project or your AGI project framework. Understanding the practical applications of the classes and their methods ensures seemless modular expansion for the easyAGI framework.
