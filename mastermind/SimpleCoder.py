@@ -9,6 +9,7 @@ from memory.memory import create_memory_folders
 from automind.agi import AGI
 from automindx.bdi import Belief, Desire, Intention, Goal, Reward
 from webmind.chatter import GPT4o, GroqModel
+from mastermind import MASTERMIND  # Importing MASTERMIND
 
 class SimpleCoder:
     def __init__(self):
@@ -20,6 +21,7 @@ class SimpleCoder:
         create_memory_folders()
         self.agency_dir = './mindx/agency'
         self._setup_agency_directory()
+        self.mastermind = MASTERMIND()  # Initialize MASTERMIND
 
     def _setup_agency_directory(self):
         """Ensure the agency directory exists and has the correct permissions."""
@@ -27,7 +29,7 @@ class SimpleCoder:
             os.makedirs(self.agency_dir, exist_ok=True)
         current_permissions = oct(os.stat(self.agency_dir).st_mode)[-3:]
         if current_permissions != '700':
-            os.chmod(self.agency_dir, 0o700)
+            os.chmod(self.agency_dir, 0o674)
 
     def initialize_agi(self):
         openai_key = self.api_manager.get_api_key('openai')
@@ -50,13 +52,31 @@ class SimpleCoder:
             return False, f"Task {task} is not supported."
         return True, "Input is valid."
 
+    def expand_supported_languages(self, new_languages):
+        """Expand the list of supported languages based on direction from MASTERMIND."""
+        for language in new_languages:
+            if language not in self.supported_languages:
+                self.supported_languages.append(language)
+                logging.info(f"Added new supported language: {language}")
+
     def execute_task(self, language, task):
         is_valid, message = self.validate_input(language, task)
         if not is_valid:
             return message
         
+        # Fetch direction from MASTERMIND
+        bdi_update = self.mastermind.fetch_bdi_update()
+        
+        # Expand supported languages if directed by MASTERMIND
+        new_languages = bdi_update.get('new_languages', [])
+        self.expand_supported_languages(new_languages)
+        
         # Placeholder for prompting AGI to ensure production-ready code
-        prompt = f"Generate production-ready {language} code for task: {task}. Output only the code as the solution."
+        prompt = (
+            f"Generate production-ready {language} code for task: {task}. "
+            f"Output only the code as the solution. "
+            f"Direction from MASTERMIND: {bdi_update}"
+        )
         
         # Example code snippets for demonstration purposes
         code_snippets = {
