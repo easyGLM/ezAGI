@@ -69,7 +69,6 @@ def store_episodic_memory(episode):
 Stores an episodic memory entry
 
 # save_valid_truth
-# truth to learn from
 ```python
 def save_valid_truth(valid_truth):
     ...
@@ -77,7 +76,6 @@ def save_valid_truth(valid_truth):
 Saves a valid truth entry in the truth folder.
 
 # save_conversation_memory
-# useful for coach and SimpleMind
 ```python
 def save_conversation_memory(memory):
     ...
