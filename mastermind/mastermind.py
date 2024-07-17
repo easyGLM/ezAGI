@@ -51,7 +51,7 @@ class MASTERMIND:
         """Ensures the existence of required directories and sets appropriate permissions."""
         for directory in self.directories:
             os.makedirs(directory, exist_ok=True)
-            os.chmod(directory, 0o700)
+            os.chmod(directory, 0o674)
 
     def _load_agents_from_directory(self, directory):
         """Dynamically loads and initializes agents from the specified directory."""
