@@ -93,8 +93,6 @@ cd easyAGI
 python3 -m venv agi
 source agi/bin/activate
 pip install -r requirements.txt
-# activate command line interaction (useful as coding agent)
-python3 easyAGIcli.py
 # activate easyAGI.py with internal reasoning (EXPERIMENTAL)
 python3 easyAGI.py
 ```
