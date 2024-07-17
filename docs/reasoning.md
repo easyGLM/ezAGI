@@ -282,7 +282,7 @@ see SocraticReasoning.py
 # Reasoning Module Documentation
 
 ## Overview
-The `reasoning.py` module is fundamental to the easyAGI project, responsible for logical deduction and problem-solving. It encapsulates the system's ability to reason, make decisions, and solve complex problems based on a set of rules, data, and logical processes.
+The `reasoning.py` module is will become fundamental to the easyAGI project, responsible for logical deduction and problem-solving. It encapsulates the system's ability to reason, make_decision, draw_conclusion and solve complex problems based on a set of rules, data, and logical processes.
 
 ## Features
 - **Logical Reasoning**: Implements various forms of logical reasoning, including deductive, inductive, and abductive reasoning, to solve problems and make decisions.
