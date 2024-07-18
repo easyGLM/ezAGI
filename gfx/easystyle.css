@@ -117,6 +117,29 @@ header {
     }
 }
 
+/* Default (light mode) styles for .logbuttons */
+.logbuttons {
+    color: #ADD8E6; /* Light blue text color */
+    font-weight: bold; /* Bold text */
+    background-color: #1C3D5A; /* Dark blue background color */
+    font-size: 16px; /* Font size set to 16 pixels */
+    width: 150px; /* Fixed width of 150 pixels */
+    padding: 10px; /* Padding of 10 pixels on all sides */
+    border: 2px solid #1C3D5A; /* Dark blue solid border with 2px width */
+    border-radius: 5px; /* Rounded corners with 5px radius */
+    display: flex; /* Enables flexbox layout */
+    justify-content: center; /* Centers content horizontally */
+}
+
+/* Dark mode styles for .logbuttons */
+@media (prefers-color-scheme: dark) {
+    .logbuttons {
+        color: #90C3D4; /* Slightly darker blue text color */
+        background-color: #122637; /* Even darker background color */
+        border: 2px solid #122637; /* Border color matches dark mode background */
+    }
+}
+
 
 
 @media (min-width: 768px) and (max-width: 991.98px) {
