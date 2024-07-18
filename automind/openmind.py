@@ -1,7 +1,7 @@
 # openmind.py
-# openmind.py (c) 2024 Gregory L. Magnusson MIT licence
+# openmind (c) 2024 Gregory L. Magnusson MIT licence
 # internal reasoning loop for continuous AGI reasoning without user interaction
-# openmind internal reasoning as asynchronous task ensures non-blocking execution and efficient concurrency
+# openmind internal reasoning asynchronous task ensuring non-blocking execution and efficient concurrency
 # modular integration of automind reasoning with memory
 # webmind for API and llama3 handling of input response from various LLM
 # log internal reasoning conclusion     ./memory/logs/thoughts.json
@@ -12,10 +12,10 @@ import os
 import time
 from datetime import datetime
 from nicegui import ui  # importing ui for easyAGI
-from automind import FundamentalAGI
-from ..memory.memory import create_memory_folders, store_in_stm, save_conversation_memory, save_internal_reasoning, DialogEntry, save_valid_truth
-from ..webmind.api import APIManager
-from ..webmind.chatter import GPT4o, GroqModel
+from memory.memory import create_memory_folders, store_in_stm, save_conversation_memory, save_internal_reasoning, DialogEntry, save_valid_truth
+from automind.automind import FundamentalAGI
+from webmind.api import APIManager
+from webmind.chatter import GPT4o, GroqModel
 import ujson as json
 import asyncio
 import logging
