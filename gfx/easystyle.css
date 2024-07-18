@@ -71,6 +71,53 @@ header {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* active:shadow-sm in Tailwind */
 }
 
+/* darkmode button row style */
+.darkrow {
+    color: #ADD8E6;
+    background-color: #1C3D5A;
+    font-weight: bold;
+    font-size: 16px;
+    width: 150px;
+    padding: 10px;
+    border: 2px solid #1C3D5A;
+    border-radius: 5px;
+    transition: background-color 200ms ease-in-out, box-shadow 200ms ease-in-out;
+    margin-left: 0.5rem; /* ml-2 equivalent in Tailwind CSS */
+    padding-top: 0.5rem; /* py-2 equivalent in Tailwind CSS */
+    padding-bottom: 0.5rem; /* py-2 equivalent in Tailwind CSS */
+    padding-left: 1rem; /* px-4 equivalent in Tailwind CSS */
+    padding-right: 1rem; /* px-4 equivalent in Tailwind CSS */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md equivalent in Tailwind CSS */
+}
+
+.darkrow:hover {
+    background-color: #1B2E40; /* hover:bg-blue-900 equivalent in Tailwind CSS */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-md equivalent in Tailwind CSS */
+}
+
+.darkrow:active {
+    background-color: #1E3A61; /* active:bg-blue-700 equivalent in Tailwind CSS */
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06); /* shadow-sm equivalent in Tailwind CSS */
+}
+
+/* Dark mode version */
+@media (prefers-color-scheme: dark) {
+    .darkrow {
+        color: #90C3D4;
+        background-color: #122637;
+        border: 2px solid #122637;
+    }
+
+    .darkrow:hover {
+        background-color: #0F1E2A; /* Adjusted for dark mode */
+    }
+
+    .darkrow:active {
+        background-color: #13273C; /* Adjusted for dark mode */
+    }
+}
+
+
 
 @media (min-width: 768px) and (max-width: 991.98px) {
     .main-content, .nicegui-content {
