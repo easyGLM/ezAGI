@@ -6,10 +6,10 @@
 
 from nicegui import ui, app  # handle UIUX
 from fastapi.staticfiles import StaticFiles  # integrate fastapi static folder and gfx folder
-import asyncio
+from automind.openmind import OpenMind  # Importing OpenMind class from openmind.py
 import concurrent.futures
+import asyncio
 import logging
-from openmind import OpenMind  # Importing OpenMind class from openmind.py
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
