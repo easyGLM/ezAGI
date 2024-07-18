@@ -11,7 +11,7 @@ body {
     line-height: 1.6;
 }
 
-/* Link Styles */
+# link style for link under chat input
 a:link, a:visited {
     color: inherit !important;
     text-decoration: none;
@@ -45,7 +45,6 @@ header {
 
 # control style for interaction tabs of chat, logs, apik from .classes('tabs-style')
 
-/* Tab Style */
 .tab-style {
     color: #218838; 
     font-weight: bold; 
@@ -71,7 +70,7 @@ header {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* active:shadow-sm in Tailwind */
 }
 
-/* darkmode button row style */
+# darkmode button row style
 .darkrow {
     color: #ADD8E6;
     background-color: #1C3D5A;
@@ -117,7 +116,8 @@ header {
     }
 }
 
-/* Default (light mode) styles for .logbuttons */
+
+# Default (light mode) styles for .logbuttons
 .logbuttons {
     color: #ADD8E6; /* Light blue text color */
     font-weight: bold; /* Bold text */
@@ -131,7 +131,8 @@ header {
     justify-content: center; /* Centers content horizontally */
 }
 
-/* Dark mode styles for .logbuttons */
+# Dark mode styles for .logbuttons
+
 @media (prefers-color-scheme: dark) {
     .logbuttons {
         color: #90C3D4; /* Slightly darker blue text color */
