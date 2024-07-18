@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles  # integrate fastapi static folder a
 import asyncio
 import concurrent.futures
 import logging
-from openmind import OpenMind  # Importing OpenMind class from openmind.py
+from automind.openmind import OpenMind  # Importing OpenMind class from openmind.py
 from webmind.html_head import add_head_html  # handler for the html head imports and meta tags
 
 # Set up logging
@@ -123,4 +123,5 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         logging.info("Shutting down...")
+
 
