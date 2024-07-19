@@ -22,7 +22,7 @@ openmind = OpenMind()  # initialize OpenMind instance
 
 @ui.page('/')
 def main():
-    global executor, message_container, log, keys_container, log_buttons
+    global executor, message_container, log, keys_container, log_buttons, text
     executor = concurrent.futures.ThreadPoolExecutor()  # initialize thread pool executor to manage and execute multiple tasks concurrently
     log_buttons = []  # List to store log button references
 
@@ -123,5 +123,3 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         logging.info("Shutting down...")
-
-
