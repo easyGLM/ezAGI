@@ -28,7 +28,7 @@ class OllamaAGI:
         self.init_ui()
 
     def init_ui(self):
-        ui.label('ezAGI').classes('text-2xl mb-4')
+        #ui.label('ezAGI').classes('text-2xl mb-4')
 
         with ui.tabs().classes('w-full') as tabs:
             chat_tab = ui.tab('Chat')
@@ -51,9 +51,9 @@ class OllamaAGI:
 
                 self.keys_container = ui.column().classes('w-full')
 
-        with ui.footer().classes('bg-white'), ui.column().classes('w-full max-w-3xl mx-auto my-6 input-area'):
+        with ui.footer().style('width: 66.6%;').classes('footer rounded'), ui.column().classes('w-full max-w-3xl mx-auto my-1 input-area rounded'):
             with ui.row().classes('w-full no-wrap items-center'):
-                placeholder = 'enter your premise and I will give you a reasoned conclusion'
+                placeholder = 'premise generates reasoned conclusion'
                 self.text_input = ui.input(placeholder=placeholder).props('rounded outlined input-class=mx-3') \
                     .classes('w-full self-center').on('keydown.enter', self.handle_generate_response)
             ui.markdown('[ezAGI](https://github.com/easyAGI/ezAGI)').classes('text-xs self-end mr-8 m-[-1em] text-primary')
