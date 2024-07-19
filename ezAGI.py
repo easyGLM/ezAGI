@@ -78,7 +78,7 @@ def main():
 
     # create tab panels for the tabs
     with ui.tab_panels(tabs, value=chat_tab).classes('response-style'):
-        message_container = ui.tab_panel(chat_tab).classes('items-stretch')
+        message_container = ui.tab_panel(chat_tab).classes('items-stretch response-container')
         openmind.message_container = message_container  # Pass the container to OpenMind
 
         # create logs tab panel
@@ -107,9 +107,9 @@ def main():
             openmind.keys_container = keys_container  # pass the container to OpenMind
 
     # footer as input field and with external markdown link
-    with ui.footer().classes('footer'), ui.column().classes('response-style'):
-        with ui.row().classes('w-full no-wrap items-center'):
-            text = ui.input(placeholder='Enter text here').classes('input').on('keydown.enter', send)  # input field with enter key event
+    with ui.footer().classes('footer'), ui.column().classes('footer'):
+        with ui.row().classes('w-full no-wrap items-center input'):
+            text = ui.input(placeholder='ezAGI enter premise for internal reasoning conclusions').classes('input').on('keydown.enter', send)  # input field with enter key event
         ui.markdown('[easyAGI](https://rage.pythai.net)').classes('footer-link')
 
     # openmind internal reasoning asynchronous task ensuring non-blocking execution and efficient concurrency
