@@ -170,7 +170,7 @@ class OpenMind:
                     response_message.clear()
                     with response_message:
                         ui.html(f"{conclusion}")
-            logging.info(f"internal reasoning {conclusion}")
+            logging.info(f"Internal reasoning conclusion: {conclusion}")
 
         # Determine which log file to write to
         log_entry = {
