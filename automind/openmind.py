@@ -21,7 +21,6 @@ import asyncio
 import logging
 import httpx
 
-
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -167,11 +166,11 @@ class OpenMind:
         if conclusion != "No premises available for logic as conclusion.":
             if self.message_container:
                 with self.message_container:
-                    response_message = ui.chat_message(name='funAGI', sent=False)
+                    response_message = ui.chat_message(name='intr', sent=False)
                     response_message.clear()
                     with response_message:
-                        ui.html(f"Internal reasoning conclusion: {conclusion}")
-            logging.info(f"Internal reasoning conclusion: {conclusion}")
+                        ui.html(f"{conclusion}")
+            logging.info(f"internal reasoning {conclusion}")
 
         # Determine which log file to write to
         log_entry = {
@@ -194,6 +193,10 @@ class OpenMind:
                 file.seek(0)
                 json.dump(data, file, indent=4)
 
+        # Also log the conclusions to conclusions.txt
+        with open('./memory/logs/conclusions.txt', 'a') as file:
+            file.write(f"{datetime.now().isoformat()}: {conclusion}\n")
+
     async def main_loop(self):
         """
         Main loop to handle both internal reasoning and user input.
@@ -214,7 +217,7 @@ class OpenMind:
         if self.message_container:
             with self.message_container:
                 ui.chat_message(text=question, name='query', sent=True)
-                response_message = ui.chat_message(name='easyAGI', sent=False)
+                response_message = ui.chat_message(name='ezAGI', sent=False)
                 spinner = ui.spinner(type='dots')
 
         try:
