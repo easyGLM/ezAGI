@@ -32,6 +32,89 @@ header {
 
 .response-style {
     padding: 10px;
+    border-radius: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 90%; /* Default to 90% width for centering */
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-grow: 1;
+    flex-basis: 0;
+    border: 0px solid #218838;
+    background-color: transparent;
+}
+
+/* Input Field Styles */
+.input {
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-grow: 1;
+    flex-basis: 0;
+    border: 2px solid #218838;
+    background-color: transparent;
+    color: #218838;
+    border-radius: 5px;
+    margin-left: 0.75rem; /* mx-3 */
+    background-color: #e6f4ea; /* bg-green-100 */
+    font-family: 'Courier New', Courier, monospace; /* input-class="font-mono" */
+}
+
+.input:focus {
+    border-color: #34d058; /* Lighter green border */
+    color: #34d058; /* Lighter green text */
+    outline: none; /* Removes default focus outline */
+}
+
+
+/* API Action Styles */
+.api-action {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #218838;
+    border: none;
+    border-radius: 3px;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+    text-align: center;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-decoration: none; /* Ensures no underline by default */
+}
+
+.api-action:hover {
+    background-color: #1e7e34;
+}
+
+.api-action:active,
+.api-action:focus {
+    background-color: #1c7430;
+    color: #a4df90; /* Lighter green color for text */
+    outline: none; /* Removes default focus outline */
+    box-shadow: 0 0 0 2px #a4df90; /* Adds a lighter green outline for focus */
+}
+
+/* Ensure the response field is visible and centered before input */
+.response-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Footer Styles */
+.footer {
+    padding: 10px;
     border-radius: 5px;
     display: flex;
     align-items: center;
@@ -41,6 +124,7 @@ header {
     margin: 0 auto;
     flex-grow: 1;
     flex-basis: 0;
+    border: 2px solid #218838;
 }
 
 # control style for interaction tabs of chat, logs, apik from .classes('tabs-style')
@@ -69,6 +153,8 @@ header {
 .tab-style:active {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* active:shadow-sm in Tailwind */
 }
+
+
 
 # darkmode button row style
 .darkrow {
