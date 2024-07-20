@@ -77,8 +77,8 @@ def main():
         api_tab = ui.tab('APIk').classes('tab-style')
 
     # create tab panels for the tabs
-    with ui.tab_panels(tabs, value=chat_tab).classes('response-style'):
-        message_container = ui.tab_panel(chat_tab).classes('items-stretch')
+    with ui.tab_panels(tabs, value=chat_tab).props('style="background-color: rgba(255, 255, 255, 0.5);"').classes('response-style'):
+        message_container = ui.tab_panel(chat_tab).props('style="background-color: rgba(255, 255, 255, 0.5);"').classes('items-stretch response-container')
         openmind.message_container = message_container  # Pass the container to OpenMind
 
         # create logs tab panel
