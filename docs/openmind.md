@@ -388,3 +388,18 @@ def handle_javascript_response(self, msg):
     Initialize OpenMind: Create an instance of the OpenMind class
     Manage API Keys: Use add_api_key, delete_api_key, and list_api_keys to manage API keys
     Run Main Loop: Call main_loop to start handling both internal reasoning and user input
+
+---
+
+## v1.0.0 update
+
+The code above reflects the original 2024 design. As of v1.0.0, `initialize_agi`
+and `select_model` are built on `webmind.chatter.resolve_chatter`, which resolves
+providers cloud-first — openai → groq → together → anthropic → ollama-cloud — with
+the local Ollama daemon as failsafe (constructing a real `OllamaModel`, no longer a
+placeholder). OpenMind also carries the console state: streaming `send_message`,
+the reasoning trace queue feeding the reasoning panel, session token counters,
+sampling controls (`set_sampling`), and a stuck-loop guard on the autonomous
+`reasoning_loop` (empty prompts are skipped; an unchanged prompt is re-reasoned at
+most three times). All log writes route through `memory/memory.py` — all logs are
+memories.

@@ -1,91 +1,36 @@
-# ezAGI (c) 2024 PYTHAI
-# Augmented Generative Intelligence<br />
-# a framework for enhancing LLM with reasoning
+# ezAGI (c) 2024–2026 PYTHAI
+# Augmented Generative Intelligence
+a framework for enhancing LLM with reasoning — **v1.0.0**
 
-```csharp
-PYTHAI/
-├── docs/  # Documentation for various aspects of the project.
-│   ├── white_papers/  white papers discussing theoretical aspects of easyAGI innovations
-│   ├── technical_docs/  # technical documentation for developers
-│   ├── user_guides/  # guides for end-users and UIUX integration
-│   └── tutorials/  # step-by-step tutorials for various functionalities.
-├── https://github.com/easyGLM/ezAGI/  # Source code for all submodules and main functionalities.
-│   ├── ezAGI/  # contains submodules and features specific to EasyAGI.
-│   │   ├── simplemind/  # code for the SimpleMind.py neural network and coach.py trainer
-│   │   ├── mastermind/  # code for masterind.py and controller.py for orchestrator of agency
-│   │   ├── automind/  # code for reasoning from automind.py
-│   │   ├── automindx/  # automind agency environment for advanced reasoning technigues
-│   │   │   ├── SimpleCoder/  # simple coding agent with bash, python and markdown agent generation
-│   │   │   └── ez/  # easy action event controller
-│   │   ├── mindX/  # Core functionalities for the MindX submodule.
-│   │   │   ├── decisions/  # internal reasoning
-│   │   │   ├── agency/  # tools as agents orchestated by mastermind
-│   │   │   └── control/  # control mechanisms for internal reasoning outputs from mastermind orchestration
-│   │   ├── ez/  # core features easy javascript action events
-│   │   ├── tests/  # tests for EasyAGI.
-│   │   ├── decisions/  # decision-making components.
-│   │   ├── memory/  # storage for memory-related data including short term, long term and episodic memory
-│   │   │   ├── truth/  # truth data storage for consistent information for SimpleMind training into fact using coach
-│   │   │   └── logs/  # logs for tracking memory-related processes and reasoning outputs to be considered for training
-│   │   └── mindx/  # executable environment folder to allow internal reasoning, SimpleCoder and agents to create agents for agency
-│   │       ├── intr/  # internal reasoning and information retrieval from thoughts
-│   │       └── training/  # training processes for models, including SimpleMind with coach
-│   ├── webmind/  # handles web-based data access and processing
-│   │   ├── data_access/  # data access modules
-│   │   └── tests/  # tests for webMind
-│   ├── webmindML/  # Machine Learning functionalities for web data
-│   │   ├── data_processing/  # Data processing modules
-│   │   └── tests/  # tests for webMindML
-│   ├── openmind/  # open-source components from fundamentalAGI, agi and internal reasoning
-│   └── common/  # common utilities and configurations shared across submodules
-│       ├── utils/  # utility functions
-│       ├── configs/  # Configuration files
-│       └── tests/  # Common tests
-├── data/  # Data storage for various stages of processing
-│   ├── raw/  # raw data files
-│   ├── processed/  # processed data files
-│   ├── external/  # external data sources
-│   └── interim/  # intermediate data states
-├── scripts/  # scripts for setup, deployment, training, and evaluation
-│   ├── setup/  # setup and installation scripts
-│   ├── deployment/  # deployment scripts
-│   ├── training/  # training scripts for models
-│   └── evaluation/  # evaluation scripts
-├── configs/  # configuration files for different components
-│   ├── database/  # database configuration files
-│   ├── RAGE/  # retrieval augmented gerative engine including model-specific configuration files
-│   └── application/  # application configuration files
-├── tests/  # tests for ensuring code quality and functionality
-│   ├── integration/  # Integration tests
-│   ├── unit/  # unit tests
-│   └── e2e/  # end-to-end tests
-├── logs/  # logs for various processes
-│   ├── training/  # logs for training processes
-│   ├── evaluation/  # logs for evaluation processes
-│   └── application/  # application logs
-├── models/  # storage for model files
-│   ├── trained/  # trained model files from coach using SimpleMind
-│   ├── checkpoints/  # checkpoints during training
-│   └── export/  # exported model files from coach
-├── results/  # storage for results and reports
-│   ├── figures/  # graphical results
-│   ├── tables/  # tabular results
-│   └── reports/  # comprehensive reports
-└── resources/  # additional resources like images and templates
-    ├── images/  # generated image files
-    ├── gfx/  # graphics and CSS and styling files
-    └── templates/  # templates for various uses
+ezAGI is the easy Augmented Generative Intelligence system: human-like reasoning,
+decision-making, self-healing and learning as output from existing LLM. Every input
+becomes a premise, every conclusion is validated, every log is a memory.
+
+```
+ezAGI/
+├── ezAGI.py           # the ezAGI console (canonical entry point)
+├── easyAGI.py         # compatibility shim launching the same console
+├── automind/          # reasoning core
+│   ├── openmind.py         # OpenMind hub: providers, chat, autonomous reasoning loop
+│   ├── automind.py         # FundamentalAGI wrapper
+│   ├── agi.py              # AGI + EasyAGI (CLI orchestrator)
+│   ├── SocraticReasoning.py# premises -> challenge -> conclusion -> validation
+│   └── logic.py            # LogicTables: truth tables, safe propositional evaluator
+├── automindx/         # agency environment: BDI, reasoning styles, self-healing
+│   ├── bdi.py, reasoning.py (THOT), make_decision.py
+│   └── epistemic / fuzzy / nonmonotonic / deductive / abduction / prediction
+├── mastermind/        # orchestrator of agency: controller.py, SimpleCoder, easyAGIcli
+├── simplemind/        # SimpleMind JAX neural network + coach trainer
+├── webmind/           # api keys (.env), chatter model wrappers, ollama handling
+├── memory/            # stm / ltm / episodic / truth / logs — all logs are memories
+├── docs/              # module documentation + lineage.md
+├── tests/             # offline smoke suite (no API keys, no network)
+└── gfx/               # easystyle.css and graphics
 ```
 
+## INSTALL
 
-# <a href="https://github.com/easyGLM/easyAGI/blob/main/requirements.txt">requirements</a><br />
-python > 3.7<br />
- <a href="https://console.groq.com/docs/quickstart">groq API key</a> or <br />
- <a href="https://openai.com/index/openai-api/">openai API key</a> <br />
-
- llama3 integration is being developed
- 
- # INSTALL
+python >= 3.10
 
 ```bash
 git clone https://github.com/easyGLM/ezAGI/
@@ -93,84 +38,112 @@ cd ezAGI
 python3 -m venv agi
 source agi/bin/activate
 pip install -r requirements.txt
-# activate ezAGI.py with internal reasoning (EXPERIMENTAL)
-python3 ezAGI.py
+# optional extras
+pip install -e ".[anthropic]"   # Claude provider
+pip install -e ".[learn]"       # SimpleMind/coach (jax, optax, numpy, sklearn, pandas)
+# run the ezAGI console
+python3 ezAGI.py                # or: pip install -e . && ezagi
 ```
 
-The ezAGI project is an augmented intelligence system designed to provide human-like reasoning and decision-making as output from exiting LLM. 
+The console serves at http://localhost:8080
 
+## Providers
 
-MASTERMIND
+Add keys in the **APIk** tab (stored in `.env` via python-dotenv) or start a local
+Ollama — ezAGI resolves providers cloud-first with the local daemon as failsafe.
 
-    Purpose: Acts as the central controller of the entire system.
-    Functions:
-        Automatically sets up necessary configurations.
-        Manages different AI agents, ensuring they work together smoothly.
-        Monitors system health and triggers self-repair actions if something goes wrong.
+| provider | service name (APIk) | default model | notes |
+|---|---|---|---|
+| OpenAI | `openai` | gpt-4.1 | |
+| Groq | `groq` | llama-3.3-70b-versatile | |
+| together.ai | `together` | meta-llama/Llama-3.3-70B-Instruct-Turbo | |
+| Anthropic | `anthropic` | claude-opus-4-8 | `pip install "ezagi[anthropic]"` |
+| Ollama Cloud | `ollama` | gpt-oss:120b | key from https://ollama.com |
+| Ollama local | — (no key) | first installed model | daemon at localhost:11434 |
 
-SimpleCoder
+## The ezAGI console
 
-    Purpose: An AI agent that can write code in multiple programming languages.
-    Functions:
-        Generates code snippets for tasks like "Hello, World!" in languages such as Python, JavaScript, and more.
-        Keeps a log of its activities for transparency and tracking.
+- **chat** — the production interaction from ezAGI: your queries and the streamed
+  answers, nothing else
+- **reasoning** — the live internal SocraticReasoning trace, clearly separated from
+  production output: premises as they are added, generated premises, challenges,
+  validation verdicts with confidence, conclusions, and the autonomous reasoning loop
+- **header** — provider + model selectors (live local Ollama model list and Ollama
+  Cloud models included), live token counters (last response and session), reasoning
+  state chip, sampling controls (temperature / max tokens), dark mode
+- **logs** — the reasoning artifacts on disk (premises, thoughts, truth, conclusions)
+- **APIk** — API key management
 
-BDI (Belief-Desire-Intention)
+## Components
 
-    Purpose: Implements a model to simulate human-like reasoning.
-    Functions:
-        Manages beliefs (what the AI knows), desires (goals the AI wants to achieve), and intentions (plans to achieve those goals).
-        Provides detailed logging to track its reasoning process.
+MASTERMIND — the central controller of agency: loads agents, orchestrates execution,
+monitors health (mastermind/controller.py)
 
-Self-Healing
+SimpleCoder — the coding agent generating python, javascript, markdown and bash
+(execution is gated behind an explicit opt-in)
 
-    Purpose: Maintains the health of the AI system.
-    Functions:
-        Regularly checks CPU, memory, and disk usage.
-        Can restart services or the entire system if needed to fix issues.
-        Frees up disk space by removing unnecessary files.
+BDI — Belief-Desire-Intention model for human-like practical reasoning (automindx/bdi.py)
 
-Reasoning
+Self-Healing — CPU, memory and disk monitoring with recovery actions (automindx/self_healing.py)
 
-    Purpose: Provides various logical reasoning strategies to support decision-making.
-    Functions:
-        Uses different types of reasoning like deductive (specific conclusions from general premises), inductive (general conclusions from specific observations), and more.
-        Helps the AI make informed decisions based on logic and evidence.
+Reasoning — deductive, inductive, abductive, analogical and more, dispatched by THOT
+(automindx/reasoning.py)
 
-LogicTables
+LogicTables — logical variables, expressions and truth tables with a safe (eval-free)
+propositional evaluator (automind/logic.py)
 
-    Purpose: Manages logical variables and expressions to support reasoning
-    Functions:
-        Adds and manages logical statements
-        Generates truth tables to evaluate the validity of logical expressions
-        Stores valid conclusions for future reference
+SocraticReasoning — every input is a premise; conclusions are validated by LLM
+judgment (with truth tables as the fast path for propositional statements) and
+recorded with confidence to ./memory/logs/truth.json
 
-SimpleMind
+SimpleMind — the minimalist JAX neural network for learning and long-term memory
+(simplemind/SimpleMind.py)
 
-    Purpose: A minimalistic neural network designed for learning and long-term memory
-    Functions:
-        Configurable neural network that can be trained on new data
-        Uses JAX for efficient mathematical computations
-        Supports parallel training to speed up the learning process
+Coach — trains SimpleMind from accumulated conversation memory in ./memory/stm
+(simplemind/coach.py)
 
-Coach
+## Integration
 
-    Purpose: Trains the SimpleMind neural network using stored beliefs
-    Functions:
-        Loads and preprocesses beliefs from memory
-        Trains the neural network and saves the model for future use
-        Logs training sessions and results for transparency
+Initialization: OpenMind resolves a provider and initializes FundamentalAGI.
+Execution: queries stream into the chat window while SocraticReasoning traces into
+the reasoning panel. Monitoring: the autonomous reasoning loop keeps reasoning about
+the latest input (idling when there is nothing new). Learning: coach trains SimpleMind
+on stored memories. Decision-Making: validated truths accumulate with confidence for
+informed decisions. See [docs/lineage.md](docs/lineage.md) for the full workflow.
 
-Integration
+## Tests
 
-The ezAGI project integrates all agent creation components using MASTERMIND orchestrator ensuring seamless integration with ezAGI. Here’s how it works:
+```bash
+pip install -e ".[dev]"
+pytest tests/ -q        # offline: no API keys, no network required
+```
 
-    Initialization: MASTERMIND sets up the system and builds agents using SimpleCoder
-    Execution: Agents perform tasks such as writing code or making logical decisions
-    Monitoring: The system’s health is continuously checked, and self-repair actions are taken if necessary
-    Learning: The SimpleMind neural network is trained on stored data to improve its performance over time
-    Decision-Making: Using logical reasoning and validated truths, the AI system makes informed decisions
+## Security notes
 
+- API keys are stored in a local `.env` (gitignored) — local single-user tool
+- SimpleCoder `execute` is disabled by default (`allow_execute=False`)
+- LogicTables evaluates expressions with an AST whitelist, never `eval`
+- ezAGI never pipes install scripts to a shell; Ollama installs print the official
+  command for you to run
 
-ezAGI is a comprehensive Augmented Intelligence framework capable of reasoning, decision-making, self-healing, and learning capabilities providing an advanced and autonomous system. easyAGI is designed to simulate human-like intelligence and operate reliably, making it a powerful tool for various applications.
+## the PYTHAI project family
 
+ezAGI is a [PYTHAI](https://github.com/pythaiml) project by Gregory L. Magnusson
+(Professor Codephreak). The lineage — documented in
+[docs/lineage.md](docs/lineage.md):
+
+**AUTOMINDx → aGLM → MASTERMIND → RAGE → funAGI → ezAGI → mindX**
+
+- [easyGLM/ezAGI](https://github.com/easyGLM/ezAGI) — this repository, the current direction
+- [easyAGI/ezAGI](https://github.com/easyAGI/ezAGI) — frozen historical snapshot of the minimal reasoning-as-logs version
+- [pythaiml/automindx](https://github.com/pythaiml/automindx) — the Professor Codephreak local language model environment; aGLM, memory services, the console whose fashion this UI follows
+- [pythaiml/funAGI](https://github.com/pythaiml/funAGI) / [autoGLM/funAGI](https://github.com/autoGLM/funAGI) — fundamental AGI: SocraticReasoning + logic tables, the point of departure
+- [autoGLM/easyAGI](https://github.com/autoGLM/easyAGI) — the original non-integrated module framework
+- [mastermindML/mastermind](https://github.com/mastermindML/mastermind) — agency creation and control
+- [openmindx/OpenMind](https://github.com/openmindx/OpenMind) — the native desktop AI workspace for local models (Tauri 2); the desktop evolution of openmind
+- [openmindx/agi](https://github.com/openmindx/agi) — open AGI components
+- [llamagi/lmagi](https://github.com/llamagi/lmagi) — the Ollama/llama departure point
+- [Professor-Codephreak](https://github.com/Professor-Codephreak) — the author
+- mindX — the successor: augmentic intelligence orchestration (Darwin-Gödel machine)
+
+[easyAGI](https://rage.pythai.net) — a PYTHAI project · MIT license
