@@ -7,9 +7,25 @@ from math import sqrt, exp, isinf, isnan, log
 from typing import Any, Optional, Callable
 from collections.abc import Callable
 from functools import reduce
-from numpy import multiply
-import numpy as np
-import matplotlib.pyplot as plt
+
+# numpy and matplotlib are optional "[learn]" extras; guard the imports so that
+# plain `import automindx.fuzzy` succeeds without them installed
+try:
+    from numpy import multiply
+    import numpy as np
+    import matplotlib.pyplot as plt
+except ImportError:  # optional dependency: pip install "ezagi[learn]"
+    multiply = None
+    np = None
+    plt = None
+
+def _require_learn():
+    """Raise a helpful error when the optional [learn] extras are missing."""
+    if np is None:
+        raise ImportError(
+            'fuzzy logic Domain/Set operations require numpy and matplotlib. '
+            'Install the optional extras with: pip install "ezagi[learn]"'
+        )
 
 # Functions that transform a given membership value to a truth value
 def true(m):
@@ -483,6 +499,7 @@ class Domain:
     """A domain is a 'measurable' dimension of 'real' values like temperature."""
     __slots__ = ["_name", "_low", "_high", "_res", "_sets"]
     def __init__(self, name: str, low: float, high: float, res: float = 1, sets: dict = None):
+        _require_learn()
         assert low < high
         assert res > 0
         self._name = name
@@ -560,6 +577,7 @@ class Set:
     domain = None
 
     def __init__(self, func: Callable, *, name: str = None, domain: Domain = None):
+        _require_learn()
         self.func = func
         self.domain = domain
         self.name = name

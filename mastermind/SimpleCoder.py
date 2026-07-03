@@ -5,18 +5,22 @@
 import json
 import logging
 import os
+import subprocess
 from webmind.api import APIManager
 from memory.memory import create_memory_folders
 from automind.agi import AGI
 from automindx.bdi import Belief, Desire, Intention, Goal, Reward
 from webmind.chatter import GPT4o, GroqModel
-from mastermind import MASTERMIND  # Importing MASTERMIND
+from mastermind.controller import MASTERMIND  # Importing MASTERMIND
 
 class SimpleCoder:
-    def __init__(self):
+    def __init__(self, allow_execute=False):
         self.name = "SimpleCoder"
         self.supported_languages = ['Python', 'JavaScript', 'Markdown', 'Bash']
         self.activity_log = []
+        # allow_execute gates the 'execute' action (running bash from user input);
+        # defaults to False so nothing is executed unless the caller opts in.
+        self.allow_execute = allow_execute
         self.api_manager = APIManager()
         self.agi = self.initialize_agi()
         create_memory_folders()
@@ -65,8 +69,8 @@ class SimpleCoder:
         if not is_valid:
             return message
         
-        # Fetch direction from MASTERMIND
-        bdi_update = self.mastermind.fetch_bdi_update()
+        # Fetch direction/state from MASTERMIND (controller exposes get_status())
+        bdi_update = self.mastermind.get_status()
         
         # Expand supported languages if directed by MASTERMIND
         new_languages = bdi_update.get('new_languages', [])
@@ -132,9 +136,21 @@ class SimpleCoder:
                 return "Error writing file."
 
         elif action == 'execute' and file_path:
+            # Gated behind allow_execute; when disabled we refuse rather than run.
+            if not self.allow_execute:
+                return ("Execution refused: SimpleCoder was constructed with "
+                        "allow_execute=False. Re-create with allow_execute=True "
+                        "to run scripts from the agency directory.")
             try:
-                result = os.system(f'bash {file_path}')
-                return f"Execution result: {result}"
+                # command is derived from user-provided filenames; shell=True is
+                # acceptable only because execution is behind the explicit
+                # allow_execute opt-in gate above.
+                result = subprocess.run(
+                    f'bash {file_path}', shell=True,
+                    capture_output=True, text=True
+                )
+                return (f"Execution result (rc={result.returncode}): "
+                        f"{result.stdout}{result.stderr}")
             except Exception as e:
                 logging.error(f"Failed to execute file: {e}")
                 return "Error executing file."
@@ -144,7 +160,8 @@ class SimpleCoder:
 
 # Example usage
 if __name__ == "__main__":
-    coder = SimpleCoder()
+    # allow_execute=True opts the demo into actually running the test script.
+    coder = SimpleCoder(allow_execute=True)
     coder.execute_task('Python', 'hello_world')
     print(coder.interact_with_agency('write', 'test.sh', '#!/bin/bash\necho "Hello from agency"'))
     print(coder.interact_with_agency('execute', 'test.sh'))

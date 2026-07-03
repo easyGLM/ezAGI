@@ -149,6 +149,19 @@ class MASTERMIND:
         mode = "ON" if state else "OFF"
         logging.info(f"Autonomous mode is now {mode}")
 
+    def get_status(self):
+        """Return a snapshot of controller state for consumers such as SimpleCoder.
+
+        Provides the names of loaded agents, the managed directories, and the
+        current autonomous flag. Consumers may read additional direction keys
+        (e.g. 'new_languages') from this dict; absent keys default cleanly.
+        """
+        return {
+            "agents": list(self.agents.keys()),
+            "directories": list(self.directories),
+            "autonomous": self.autonomous,
+        }
+
 if __name__ == "__main__":
     mastermind = MASTERMIND()
     mastermind.execute_agents()

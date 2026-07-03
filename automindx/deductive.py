@@ -7,7 +7,8 @@ import datetime
 import json
 import logging
 import pathlib
-from logic import LogicTables, save_valid_truth
+from automind.logic import LogicTables
+from memory.memory import save_valid_truth
 
 class Graph:
     """

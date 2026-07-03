@@ -1,6 +1,12 @@
 # reasoning.py (c) Gregory L. Magnusson
 # a philosphical disertation in python
 
+import json
+import logging
+import os
+
+from automind.SocraticReasoning import SocraticReasoning
+
 class Proposition:
     def __init__(self, statement):
         self.statement = statement
@@ -257,10 +263,35 @@ if __name__ == "__main__":
     print(reasoning.logical_conclusion())
 
 class THOT:
-    def __init__(self, reasoners, chatter):
-        self.reasoners = reasoners
+    """
+    Tapestry of thought. THOT dispatches an input across the reasoning styles
+    defined above and gathers each perspective into a single tapestry of results.
+    """
+
+    # reasoning-style classes defined above, keyed by style name
+    STYLES = {
+        "deductive": DeductiveReasoning,
+        "inductive": InductiveReasoning,
+        "abductive": AbductiveReasoning,
+        "analogical": AnalogicalReasoning,
+        "case_based": CaseBasedReasoning,
+        "nonmonotonic": NonmonotonicReasoning,
+        "formal": FormalReasoning,
+        "informal": InformalReasoning,
+        "probabilistic": ProbabilisticReasoning,
+        "heuristic": HeuristicReasoning,
+        "causal": CausalReasoning,
+        "counterfactual": CounterfactualReasoning,
+        "fuzzy": FuzzyReasoning,
+        "modal": ModalReasoning,
+        "deontic": DeonticReasoning,
+    }
+
+    def __init__(self, chatter=None, reasoners=None):
         self.chatter = chatter
-        self.socratic_reasoner = SocraticReasoning(self.chatter)
+        self.reasoners = dict(reasoners) if reasoners is not None else dict(self.STYLES)
+        # SocraticReasoning refinement is available only when a chatter is supplied
+        self.socratic_reasoner = SocraticReasoning(self.chatter) if self.chatter is not None else None
         self.thot_log_path = './mindx/thots.json'
         self.initialize_thot_log()
 
@@ -278,27 +309,63 @@ class THOT:
         with open(self.thot_log_path, 'w') as file:
             json.dump(thots, file, indent=4)
 
+    def think(self, input_text, styles=None):
+        """
+        Dispatch input_text across the selected reasoning styles.
+
+        Args:
+            input_text: the statement to reason about.
+            styles: optional list of style names; defaults to every reasoner.
+
+        Returns:
+            dict: {style_name: result} for each reasoning style applied.
+        """
+        proposition = Proposition(input_text)
+        selected = styles if styles is not None else list(self.reasoners)
+        results = {}
+        for name in selected:
+            reasoner = self.reasoners.get(name)
+            if reasoner is None:
+                logging.warning(f"Unknown reasoning style: {name}")
+                continue
+            try:
+                if name == "inductive":
+                    results[name] = reasoner.reason([proposition])
+                elif name == "nonmonotonic":
+                    results[name] = reasoner.reason([proposition], proposition)
+                else:
+                    results[name] = reasoner.reason(proposition, proposition)
+            except Exception as e:
+                logging.error(f"Error in {name} reasoning: {e}")
+                results[name] = f"Error: {e}"
+        self.log_thot({"input": input_text, "results": results})
+        return results
+
     def combine_results(self, proposition_p, proposition_q):
         combined_results = []
-        for reasoner in self.reasoners:
+        for name, reasoner in self.reasoners.items():
             try:
-                if reasoner == Deduce().nonmonotonic_reasoning:
-                    result = reasoner(proposition_p, proposition_q)
-                elif reasoner == Deduce().inductive_reasoning:
-                    result = reasoner([proposition_p, proposition_q])
+                if name == "inductive":
+                    result = reasoner.reason([proposition_p, proposition_q])
+                elif name == "nonmonotonic":
+                    result = reasoner.reason([proposition_p], proposition_q)
                 else:
-                    result = reasoner(proposition_p, proposition_q)
+                    result = reasoner.reason(proposition_p, proposition_q)
                 combined_results.append(result)
             except Exception as e:
-                logging.error(f"Error in {reasoner.__name__}: {e}")
+                logging.error(f"Error in {name} reasoning: {e}")
         return combined_results
 
     def make_decision(self, combined_results):
+        if self.chatter is None:
+            raise ValueError("THOT requires a chatter instance to make a decision.")
         decision = self.chatter.generate_response("\n".join(combined_results))
         return decision
 
     def refine_decision(self, decision):
+        if self.socratic_reasoner is None:
+            raise ValueError("THOT requires a chatter instance to refine a decision.")
         self.socratic_reasoner.add_premise(decision)
-        self.socratic_reasoner.draw_conclusion()
-        refined_decision = self
+        refined_decision = self.socratic_reasoner.draw_conclusion()
+        return refined_decision
 

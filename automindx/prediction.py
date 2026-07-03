@@ -1,7 +1,22 @@
 # Prediction Start
 import os
-import joblib
-import pandas as pd
+
+# joblib, pandas and scikit-learn are optional "[learn]" extras; guard the
+# imports so that plain `import automindx.prediction` succeeds without them
+try:
+    import joblib
+    import pandas as pd
+except ImportError:  # optional dependency: pip install "ezagi[learn]"
+    joblib = None
+    pd = None
+
+def _require_learn():
+    """Raise a helpful error when the optional [learn] extras are missing."""
+    if joblib is None or pd is None:
+        raise ImportError(
+            'prediction requires joblib, pandas and scikit-learn. '
+            'Install the optional extras with: pip install "ezagi[learn]"'
+        )
 
 def load_model(model_dir):
     """
@@ -13,6 +28,7 @@ def load_model(model_dir):
     Returns:
         The loaded machine learning model.
     """
+    _require_learn()
     model_filename = os.path.join(model_dir, 'trained_model.pkl')
     clf = joblib.load(model_filename)
     return clf
@@ -28,6 +44,7 @@ def predict(model, features):
     Returns:
         A Pandas Series containing the predicted labels.
     """
+    _require_learn()
     predictions = model.predict(features)
     return pd.Series(predictions, name='predicted_label')
 

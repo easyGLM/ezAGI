@@ -20,7 +20,7 @@ class Belief:
         self.belief = belief
         self.logic = LogicTables()  # Initialize LogicTables class for logical operations
         self.api_manager = APIManager()  # Initialize APIManager for managing API keys
-        api_key = self.api_manager.get_api_key('gpt4o')  # Retrieve the API key for the chatter service
+        api_key = self.api_manager.get_api_key('openai')  # Retrieve the API key for the chatter service
         if not api_key:
             raise ValueError("API key for GPT4o is missing. Please add it using APIManager.")
         self.socratic = SocraticReasoning(GPT4o(api_key))  # Initialize SocraticReasoning class with a chatter instance
@@ -81,7 +81,11 @@ class Goal:
         try:
             # Evaluate conditions based on beliefs, desires, and intentions
             # Return True if the goal is fulfilled, otherwise False
-            return all(belief_system.evaluate_belief(cond) == f"Belief '{cond}' is valid." for cond in self.conditions)
+            return all(
+                any(str(belief) == cond and belief.evaluate_belief() == f"Belief '{cond}' is valid."
+                    for belief in belief_system)
+                for cond in self.conditions
+            )
         except Exception as e:
             logger.error(f"Error evaluating if goal '{self.name}' is fulfilled: {e}")
             return False
@@ -94,9 +98,9 @@ class Reward:
     def __init__(self):
         self.total_reward = 0
 
-    def update_reward(self, goal):
+    def update_reward(self, goal, belief_system, desire_system, intentions_system):
         try:
-            if goal.is_fulfilled():
+            if goal.is_fulfilled(belief_system, desire_system, intentions_system):
                 # Update the total reward based on the priority or other criteria
                 self.total_reward += goal.priority
         except Exception as e:
@@ -134,5 +138,5 @@ if __name__ == "__main__":
     print(goal)
 
     # Update and get reward
-    reward.update_reward(goal)
+    reward.update_reward(goal, belief_system, desire_system, intentions_system)
     print(reward.get_reward())

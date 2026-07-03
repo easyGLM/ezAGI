@@ -3,12 +3,77 @@
 # creates long term memory adaptation as learning for easyAGI
 
 import os
-import jax.numpy as jnp
-import jax.random as random
-import optax
-from jax import grad, jit
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+
+# jax/optax are optional heavy dependencies. Guard the imports so that
+# `import simplemind.SimpleMind` succeeds even when they are not installed;
+# a helpful error is raised only when SimpleMind is actually constructed.
+try:
+    import jax.numpy as jnp
+    import jax.random as random
+    import optax
+    from jax import grad, jit
+    _JAX_AVAILABLE = True
+    _JAX_IMPORT_ERROR = None
+except ImportError as _e:  # pragma: no cover - exercised only without jax
+    jnp = None
+    random = None
+    optax = None
+    grad = None
+    jit = None
+    _JAX_AVAILABLE = False
+    _JAX_IMPORT_ERROR = _e
+
+
+def _require_jax():
+    """Raise a helpful install hint when jax/optax are unavailable."""
+    if not _JAX_AVAILABLE:
+        raise ImportError(
+            "SimpleMind requires jax and optax. Install the learning extras "
+            'with: pip install "ezagi[learn]"'
+        ) from _JAX_IMPORT_ERROR
+
+
+# ---------------------------------------------------------------------------
+# Module-level pure functions. These take params explicitly (no `self`) so
+# they can be jitted cleanly. The network topology (hidden_sizes, activation,
+# regularization) is passed as data / closed over where needed.
+# ---------------------------------------------------------------------------
+
+def _activation_function(s, activation):
+    if activation == 'sigmoid':
+        return 1 / (1 + jnp.exp(-s))
+    elif activation == 'tanh':
+        return jnp.tanh(s)
+    elif activation == 'relu':
+        return jnp.maximum(0, s)
+    else:
+        raise ValueError("Unsupported activation function.")
+
+
+def _forward(params, x, num_hidden, activation):
+    """Pure forward pass over an MLP described by `params`."""
+    out = x
+    for i in range(num_hidden):
+        W, b = params[f'W{i}'], params[f'b{i}']
+        out = jnp.dot(out, W) + b
+        out = _activation_function(out, activation)
+    W, b = params[f'W{num_hidden}'], params[f'b{num_hidden}']
+    out = jnp.dot(out, W) + b
+    return out
+
+
+def _loss(params, x, y, num_hidden, activation, regularization, reg_lambda):
+    """Mean-squared-error loss with optional L2 regularization."""
+    predictions = _forward(params, x, num_hidden, activation)
+    loss_value = jnp.mean((predictions - y) ** 2)
+    if regularization == 'l2':
+        l2_penalty = sum(
+            jnp.sum(jnp.square(params[f'W{i}'])) for i in range(num_hidden + 1)
+        )
+        loss_value = loss_value + reg_lambda * l2_penalty / 2
+    return loss_value
+
 
 class SimpleMind:
     def __init__(self, input_size, hidden_sizes, output_size, activation='relu', optimizer='adam', learning_rate=0.001, regularization=None, reg_lambda=0.01):
@@ -24,6 +89,8 @@ class SimpleMind:
         :param regularization: Regularization method ('l2').
         :param reg_lambda: Regularization strength.
         """
+        _require_jax()
+
         self.input_size = input_size
         self.hidden_sizes = hidden_sizes
         self.output_size = output_size
@@ -33,13 +100,28 @@ class SimpleMind:
         self.regularization = regularization
         self.reg_lambda = reg_lambda
         self.rng = random.PRNGKey(0)
-        
+
         self.params = self._initialize_parameters()
-        self.opt_state = self._initialize_optimizer()
+
+        # Store the optimizer and its state on the instance. optax optimizer
+        # objects are not clean jit arguments, so we close over self.optimizer
+        # inside jitted update/loss closures built here in __init__.
+        self.optimizer = self._make_optimizer()
+        self.opt_state = self.optimizer.init(self.params)
+
+        self._build_jitted_functions()
         self._setup_logging()
 
     def _setup_logging(self):
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    def _make_optimizer(self):
+        if self.optimizer_name == 'adam':
+            return optax.adam(self.learning_rate)
+        elif self.optimizer_name == 'sgd':
+            return optax.sgd(self.learning_rate)
+        else:
+            raise ValueError(f"Unsupported optimizer: {self.optimizer_name}")
 
     def _initialize_parameters(self):
         """
@@ -55,29 +137,36 @@ class SimpleMind:
             params[f'b{i}'] = jnp.zeros(layer_sizes[i+1])
         return params
 
-    def _initialize_optimizer(self):
-        """
-        Initialize the optimizer state.
+    def _build_jitted_functions(self):
+        """Construct jitted closures over the (static) network config and the
+        optax optimizer, avoiding passing self/optimizer as jit arguments."""
+        num_hidden = len(self.hidden_sizes)
+        activation = self.activation
+        regularization = self.regularization
+        reg_lambda = self.reg_lambda
+        optimizer = self.optimizer
 
-        :return: Initialized optimizer state.
-        """
-        if self.optimizer_name == 'adam':
-            optimizer = optax.adam(self.learning_rate)
-        elif self.optimizer_name == 'sgd':
-            optimizer = optax.sgd(self.learning_rate)
-        else:
-            raise ValueError(f"Unsupported optimizer: {self.optimizer_name}")
-        return optimizer.init(self.params)
+        @jit
+        def forward_fn(params, x):
+            return _forward(params, x, num_hidden, activation)
 
-    def _activation_function(self, s):
-        if self.activation == 'sigmoid':
-            return 1 / (1 + jnp.exp(-s))
-        elif self.activation == 'tanh':
-            return jnp.tanh(s)
-        elif self.activation == 'relu':
-            return jnp.maximum(0, s)
-        else:
-            raise ValueError("Unsupported activation function.")
+        @jit
+        def loss_fn(params, x, y):
+            return _loss(params, x, y, num_hidden, activation,
+                         regularization, reg_lambda)
+
+        grad_fn = jit(grad(loss_fn))
+
+        @jit
+        def update_fn(params, opt_state, x, y):
+            grads = grad_fn(params, x, y)
+            updates, opt_state = optimizer.update(grads, opt_state)
+            params = optax.apply_updates(params, updates)
+            return params, opt_state
+
+        self._forward_fn = forward_fn
+        self._loss_fn = loss_fn
+        self._update_fn = update_fn
 
     def forward(self, X):
         """
@@ -86,51 +175,11 @@ class SimpleMind:
         :param X: Input data.
         :return: Output of the network.
         """
-        out = X
-        for i in range(len(self.hidden_sizes)):
-            W, b = self.params[f'W{i}'], self.params[f'b{i}']
-            out = jnp.dot(out, W) + b
-            out = self._activation_function(out)
-        W, b = self.params[f'W{len(self.hidden_sizes)}'], self.params[f'b{len(self.hidden_sizes)}']
-        out = jnp.dot(out, W) + b
-        return out
+        return self._forward_fn(self.params, X)
 
-    @jit
-    def _loss_fn(self, params, X, y):
-        def loss(params):
-            predictions = self.forward(X)
-            loss_value = jnp.mean((predictions - y) ** 2)
-            if self.regularization == 'l2':
-                l2_penalty = sum(jnp.sum(jnp.square(params[f'W{i}'])) for i in range(len(self.hidden_sizes) + 1))
-                loss_value += self.reg_lambda * l2_penalty / 2
-            return loss_value
-        return loss(params)
-
-    @jit
-    def _gradient_fn(self, params, X, y):
-        return grad(self._loss_fn)(params, X, y)
-
-    def _parallel_backpropagate(self, X, y):
-        """
-        Perform backpropagation in parallel using multiple threads.
-        """
-        def worker(X, y):
-            return self._backpropagate(X, y)
-
-        with ThreadPoolExecutor(os.cpu_count()) as executor:
-            futures = [executor.submit(worker, X[i], y[i]) for i in range(len(X))]
-
-        results = []
-        for future in as_completed(futures):
-            results.append(future.result())
-        return results
-
-    @jit
-    def _backpropagate(self, X, y):
-        grads = self._gradient_fn(self.params, X, y)
-        updates, self.opt_state = self.optimizer.update(grads, self.opt_state)
-        self.params = optax.apply_updates(self.params, updates)
-        return self.params, self.opt_state
+    # predict is a public alias for forward for API clarity.
+    def predict(self, X):
+        return self.forward(X)
 
     def train(self, X, y, epochs):
         """
@@ -141,21 +190,13 @@ class SimpleMind:
         :param epochs: Number of epochs to train.
         """
         for epoch in range(epochs):
-            self._parallel_backpropagate(X, y)
+            self.params, self.opt_state = self._update_fn(
+                self.params, self.opt_state, X, y
+            )
             if epoch % 100 == 0:
-                loss_value = self._calculate_loss(X, y)
+                loss_value = self._loss_fn(self.params, X, y)
                 logging.info(f"Epoch {epoch}, Loss: {loss_value}")
 
-    @jit
-    def _calculate_loss(self, X, y):
-        """
-        Calculate the loss of the network.
-        """
-        output = self.forward(X)
-        loss_value = jnp.mean(jnp.square(y - output))
-        if self.regularization == 'l2':
-            loss_value += self.reg_lambda / 2 * sum(jnp.sum(jnp.square(self.params[f'W{i}'])) for i in range(len(self.hidden_sizes) + 1))
-        return loss_value
 
 # Example usage
 if __name__ == "__main__":
@@ -171,4 +212,3 @@ if __name__ == "__main__":
     simple_mind = SimpleMind(input_size, hidden_sizes, output_size, activation='relu', optimizer='adam', learning_rate=learning_rate, regularization='l2', reg_lambda=0.01)
     simple_mind.train(X, y, epochs)
     print("Final output:", simple_mind.forward(X))
-

@@ -1,11 +1,20 @@
 # easyAGIcli.py (c) 2024  Gregory L. Magnusson MIT licence
 # fundamental AGI terminal interaction with internal reasoning loop
-import openai
+import sys
 import logging
-from ..memory.memory import create_memory_folders, store_in_stm, DialogEntry
-from ..automind.agi import AGI
-from ..webmind.api import APIManager
-from ..webmind.chatter import GPT4o, GroqModel
+from pathlib import Path
+
+# Repo-root bootstrap: only when run directly (python3 mastermind/easyAGIcli.py)
+# so package-absolute imports resolve; `python3 -m mastermind.easyAGIcli`
+# already has the repo root on sys.path.
+if __name__ == "__main__" and __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import openai
+from memory.memory import create_memory_folders, store_in_stm, DialogEntry
+from automind.agi import AGI
+from webmind.api import APIManager
+from webmind.chatter import GPT4o, GroqModel
 
 class FundamentalAGI:
     def __init__(self):

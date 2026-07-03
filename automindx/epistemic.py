@@ -5,16 +5,16 @@ import logging
 import json
 import os
 from datetime import datetime
-from logic import LogicTables  # Importing the LogicTables class from logic.py
-from bdi import Belief, Desire, Intention, Goal, Reward  # Importing BDI classes
-from chatter import GPT4o, GroqModel, OllamaModel  # Importing reasoning models
+from automind.logic import LogicTables  # Importing the LogicTables class from logic.py
+from automindx.bdi import Belief, Desire, Intention, Goal, Reward  # Importing BDI classes
+from webmind.chatter import GPT4o, GroqModel, OllamaModel  # Importing reasoning models
 from webmind.api import APIManager  # Importing API manager
 from memory.memory import create_memory_folders, store_in_stm, DialogEntry  # Importing memory management
 
 # Setup logging configuration
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levellevel)s - %(message)s',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.FileHandler("epistemic.log"), logging.StreamHandler()]
 )
 logger = logging.getLogger('AutoepistemicAgent')
