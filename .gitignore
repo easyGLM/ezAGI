@@ -1,0 +1,23 @@
+# nested historical checkout (its own git repo — never index it here)
+ezAGIdev/
+
+# secrets
+.env
+
+# python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+agi/
+
+# runtime memory data (memory/memory.py creates these at run time)
+memory/stm/
+memory/ltm/
+memory/logs/
+memory/truth/
+memory/episodic/
+mindx/
+
+# tooling
+.pytest_cache/

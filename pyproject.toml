@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ezagi"
+version = "1.0.0"
+description = "ezAGI — easy Augmented Generative Intelligence: a framework for enhancing LLM with reasoning"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Gregory L. Magnusson (Professor Codephreak / PYTHAI)" },
+]
+requires-python = ">=3.10"
+keywords = ["AGI", "augmented intelligence", "reasoning", "LLM", "PYTHAI", "codephreak"]
+dependencies = [
+    "openai>=1.60,<2",
+    "groq>=0.13",
+    "together>=1.3",
+    "python-dotenv>=1.0",
+    "nicegui>=1.4.29,<2",
+    "aiohttp>=3.9",
+    "httpx>=0.27",
+    "ujson>=5.10",
+    "psutil>=6.0",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.40"]
+learn = [
+    "jax[cpu]",
+    "optax",
+    "numpy",
+    "scikit-learn",
+    "joblib",
+    "pandas",
+    "matplotlib",
+]
+dev = ["pytest>=8"]
+
+[project.urls]
+Homepage = "https://github.com/easyGLM/ezAGI"
+Documentation = "https://rage.pythai.net/easyagi/"
+
+[project.scripts]
+ezagi = "ezAGI:run"
+
+[tool.setuptools]
+packages = ["automind", "automindx", "mastermind", "memory", "simplemind", "webmind"]
+py-modules = ["ezAGI", "easyAGI"]
