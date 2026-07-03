@@ -21,3 +21,6 @@ mindx/
 
 # tooling
 .pytest_cache/
+
+# runtime module logs
+*.log
