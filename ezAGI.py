@@ -1,125 +1,229 @@
 # ezAGI.py
 # ezAGI (c) Gregory L. Magnusson MIT license 2024
-# conversation from main_loop(self) is saved to ./memory/stm/timestampmemeory.json from memory.py creating short term memory store of input response
-# reasoning_loop(self)conversation from internal_conclusions are saved in ./memory/logs/thoughts.json
-# easy augmented generative intelligence UIUX
+# easy augmented generative intelligence UIUX — the ezAGI console
+# main chat window is the production interaction from ezAGI: user queries and
+# streamed answers only; internal SocraticReasoning is displayed in its own
+# reasoning panel (premises, challenges, validation verdicts, conclusions)
+# conversation from send_message is saved to ./memory/stm/{timestamp}memory.json
+# internal conclusions are saved to ./memory/logs/thoughts.json
+
+from pathlib import Path
+import asyncio
+import logging
 
 from nicegui import ui, app  # handle UIUX
 from fastapi.staticfiles import StaticFiles  # integrate fastapi static folder and gfx folder
-import asyncio
-import concurrent.futures
-import logging
-from automind.openmind import OpenMind  # Importing OpenMind class from openmind.py
+
+from automind.openmind import OpenMind
 from webmind.html_head import add_head_html  # handler for the html head imports and meta tags
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+
+ROOT = Path(__file__).parent
 
 # Serve static graphic files and easystyle.css from the 'gfx' directory
-app.mount('/gfx', StaticFiles(directory='gfx'), name='gfx')
+app.mount('/gfx', StaticFiles(directory=str(ROOT / 'gfx')), name='gfx')
 
 openmind = OpenMind()  # initialize OpenMind instance
 
+# log files as the code actually writes them
+LOG_FILES = {
+    "Premises Log": "./memory/logs/premises.json",
+    "Not Premise Log": "./memory/logs/notpremise.json",
+    "Truth Log": "./memory/logs/truth.json",
+    "Thoughts Log": "./memory/logs/thoughts.json",
+    "Conclusions Log": "./memory/logs/conclusions.txt",
+    "Socratic Log": "./memory/logs/socraticlogs.txt",
+    "Error Log": "./memory/logs/errorlogs.txt",
+}
+
+# one internal reasoning main_loop for the whole app, not one per page visit
+app.on_startup(lambda: asyncio.create_task(openmind.main_loop()))
+
+
+def _trace_row(container, event):
+    """Render one reasoning-trace event into the trace container."""
+    kind = event.get("type")
+    stamp = event.get("time", "")
+    with container:
+        if kind == "premise":
+            ui.label(f"{stamp}  premise: {event.get('premise', '')}").classes('trace-row trace-premise')
+        elif kind == "generated_premise":
+            ui.label(f"{stamp}  generated premise: {event.get('premise', '')}").classes('trace-row trace-generated')
+        elif kind == "challenge":
+            ui.label(f"{stamp}  challenged: {event.get('premise', '')}").classes('trace-row trace-challenge')
+        elif kind == "conclusion_attempt":
+            ui.separator()
+            ui.label(f"{stamp}  conclusion attempt {event.get('attempt', '?')}").classes('trace-row trace-attempt')
+        elif kind == "validation":
+            verdict = "VALID" if event.get("valid") else "INVALID"
+            badge_color = "green" if event.get("valid") else "orange"
+            with ui.row().classes('trace-row items-center'):
+                ui.label(f"{stamp}  validation ({event.get('method', '')})")
+                ui.badge(f"{verdict} · {event.get('confidence', 0):.1f}", color=badge_color)
+        elif kind == "conclusion":
+            with ui.card().classes('trace-conclusion w-full'):
+                ui.label(f"{stamp}  conclusion (confidence {event.get('confidence', 0):.1f})").classes('text-bold')
+                ui.markdown(event.get("conclusion", ""))
+        elif kind == "internal_conclusion":
+            with ui.card().classes('trace-internal w-full'):
+                ui.label(f"{stamp}  autonomous reasoning").classes('text-bold')
+                ui.markdown(event.get("conclusion", ""))
+
+
 @ui.page('/')
 def main():
-    global executor, message_container, log, keys_container, log_buttons, text
-    executor = concurrent.futures.ThreadPoolExecutor()  # initialize thread pool executor to manage and execute multiple tasks concurrently
-    log_buttons = []  # List to store log button references
-
-    async def send() -> None:
-        question = text.value  # get value from input field
-        text.value = ''  # clear input field for openmind
-        await openmind.send_message(question)  # send the question to OpenMind
-        await openmind.internal_queue.put(question)  # add question to the internal queue for processing
-
     # configure HTML head content from html_head.py external module in the webmind folder
     add_head_html(ui)
 
-    # initialize dark mode toggle
     dark_mode = ui.dark_mode()
 
-    async def toggle_dark_mode():
-        dark_mode.value = not dark_mode.value  # toggle dark mode value
-        dark_mode_toggle.set_text('Light Mode' if dark_mode.value else 'Dark Mode')  # update button
-        dark_mode_toggle.classes(remove='light-mode-toggle' if dark_mode.value else 'dark-mode-toggle')  # class remove for dark-mode / light-mode
-        dark_mode_toggle.classes(add='dark-mode-toggle' if dark_mode.value else 'light-mode-toggle')  # dark_mode toggle swtich
+    async def send() -> None:
+        question = text.value  # get value from input field
+        if not question or not question.strip():
+            return
+        text.value = ''  # clear input field for openmind
+        await openmind.internal_queue.put(question)  # feed the autonomous reasoning loop
+        await openmind.send_message(question)  # production answer, streamed
 
-        # update log button styles based on dark mode
-        for button in log_buttons:
-            button.classes(remove='light-log-buttons' if dark_mode.value else 'dark-log-buttons')
-            button.classes(add='dark-log-buttons' if dark_mode.value else 'light-log-buttons')
+    # ---------------------------------------------------------------- header
+    def refresh_providers():
+        providers = openmind.available_providers()
+        provider_select.set_options(providers)
+        if providers and provider_select.value not in providers:
+            provider_select.value = providers[0]
 
-    # create a row for the dark mode toggle button
-    with ui.row().classes('justify-end w-full p-4'):
-        dark_mode_toggle = ui.button('Dark Mode', on_click=toggle_dark_mode).classes('light-mode-toggle')
+    def on_provider_change():
+        provider = provider_select.value
+        if not provider:
+            return
+        models = openmind.models_for(provider)
+        model_select.set_options(models)
+        model_select.value = models[0] if models else None
 
-    # define log files and their paths
-    log_files = {
-        "Premises Log": "./memory/logs/premises.json",
-        "Not Premise Log": "./memory/logs/notpremise.json",
-        "Truth Tables Log": "./memory/logs/truth_tables.json",
-        "Thoughts Log": "./memory/logs/thoughts.json",
-        "Conclusions Log": "./memory/logs/conclusions.txt",
-        "Decisions Log": "./memory/logs/decisions.json"
-    }
+    def on_model_change():
+        if provider_select.value and model_select.value:
+            openmind.select_model(provider_select.value, model_select.value)
 
-    # function to view log files
-    def view_log(file_path):
-        log_content = openmind.read_log_file(file_path)  # Read log file content
-        log_container.clear()  # Clear the existing log content
-        with log_container:
-            ui.markdown(log_content).classes('w-full')  # Display log content
+    with ui.header().classes('console-header items-center'):
+        ui.label('ezAGI').classes('text-lg text-bold')
+        provider_select = ui.select(options=[], label='provider',
+                                    on_change=lambda _: on_provider_change()).classes('console-select')
+        model_select = ui.select(options=[], label='model',
+                                 on_change=lambda _: on_model_change()).classes('console-select console-model')
+        ui.button(icon='refresh', on_click=refresh_providers).props('flat dense').tooltip('rescan providers')
+        ui.space()
+        state_chip = ui.badge('idle', color='grey')
+        token_label = ui.label('tokens — last: 0/0 · session: 0').classes('token-counter')
+        ui.button(icon='tune', on_click=lambda: settings_drawer.toggle()).props('flat dense').tooltip('sampling controls')
+        ui.button(icon='dark_mode', on_click=lambda: dark_mode.toggle()).props('flat dense').tooltip('toggle dark mode')
 
-    # create tabs menu for chat, logs, and API keys
+    def refresh_status():
+        tokens = openmind.session_tokens
+        token_label.set_text(
+            f"tokens — last: {tokens['last_in']}/{tokens['last_out']} · session: {tokens['total']}")
+        thinking = openmind.reasoning_state == 'thinking'
+        state_chip.set_text('thinking' if thinking else 'idle')
+        state_chip._props['color'] = 'primary' if thinking else 'grey'
+        state_chip.update()
+        active = openmind.current_provider
+        if active and provider_select.value is None:
+            refresh_providers()
+
+    ui.timer(1.0, refresh_status)
+
+    # ------------------------------------------------------- sampling drawer
+    with ui.right_drawer(value=False).classes('console-drawer') as settings_drawer:
+        ui.label('sampling controls').classes('text-bold')
+        temp_enabled = ui.switch('set temperature', value=False)
+        temp_slider = ui.slider(min=0.0, max=2.0, step=0.1, value=0.7).props('label-always')
+        max_tokens_input = ui.number('max tokens (blank = provider default)', value=None, min=1, max=128000)
+
+        def apply_sampling():
+            temperature = float(temp_slider.value) if temp_enabled.value else None
+            max_tokens = int(max_tokens_input.value) if max_tokens_input.value else None
+            openmind.set_sampling(temperature=temperature, max_tokens=max_tokens)
+            ui.notify(f'sampling: temperature={temperature}, max_tokens={max_tokens}')
+
+        ui.button('apply', on_click=apply_sampling).classes('mt-2')
+
+    # ------------------------------------------------------------------ tabs
     with ui.tabs().classes('w-full') as tabs:
         chat_tab = ui.tab('chat').classes('tab-style')
+        reasoning_tab = ui.tab('reasoning').classes('tab-style')
         logs_tab = ui.tab('logs').classes('tab-style')
         api_tab = ui.tab('APIk').classes('tab-style')
 
-    # create tab panels for the tabs
-    with ui.tab_panels(tabs, value=chat_tab).props('style="background-color: rgba(255, 255, 255, 0.5);"').classes('response-style'):
-        message_container = ui.tab_panel(chat_tab).props('style="background-color: rgba(255, 255, 255, 0.5);"').classes('items-stretch response-container')
-        openmind.message_container = message_container  # Pass the container to OpenMind
+    with ui.tab_panels(tabs, value=chat_tab).classes('response-style w-full'):
+        # chat: the production interaction from ezAGI — queries and answers only
+        message_container = ui.tab_panel(chat_tab).classes('items-stretch response-container')
+        openmind.message_container = message_container
 
-        # create logs tab panel
+        # reasoning: the live internal SocraticReasoning trace
+        with ui.tab_panel(reasoning_tab):
+            ui.label('internal reasoning — SocraticReasoning trace').classes('text-bold')
+            trace_container = ui.column().classes('w-full trace-container')
+
+        # logs: reasoning artifacts on disk
         with ui.tab_panel(logs_tab):
-            log = ui.log().classes('w-full h-full')
+            log = ui.log().classes('w-full h-32')
+            openmind.log = log
             log_container = ui.column().classes('w-full')
-            openmind.log = log  # Pass the log to OpenMind
 
-            log_buttons_container = ui.column().classes('w-full')
-            with log_buttons_container:
-                for log_name, log_path in log_files.items():
-                    button = ui.button(log_name, on_click=lambda path=log_path: view_log(path)).classes('log-buttons light-log-buttons' if dark_mode.value else 'dark-log-buttons')
-                    log_buttons.append(button)  # append button to log_buttons list
+            def view_log(file_path):
+                log_content = openmind.read_log_file(file_path)
+                log_container.clear()
+                with log_container:
+                    ui.markdown(f"```\n{log_content}\n```").classes('w-full')
 
-        # create API keys tab panel
+            with ui.row().classes('w-full'):
+                for log_name, log_path in LOG_FILES.items():
+                    ui.button(log_name, on_click=lambda path=log_path: view_log(path)).classes('logbuttons')
+
+        # API keys management
         with ui.tab_panel(api_tab):
             ui.label('Manage API Keys').classes('text-lg font-bold')
+            ui.label('services: openai · groq · together · anthropic · ollama (Ollama Cloud key)').classes('text-caption')
             with ui.row().classes('items-center'):
-                openmind.service_input = ui.input('Service (e.g., "openai", "groq")').classes('flex-1 input')
-                openmind.key_input = ui.input('API Key').classes('flex-1 input')
-            with ui.dropdown_button('Actions', auto_close=True):
-                ui.menu_item('Add API Key', on_click=openmind.add_api_key).classes('api-action')
-                ui.menu_item('List API Keys', on_click=openmind.list_api_keys).classes('api-action')
-
+                openmind.service_input = ui.input('service (e.g. "openai", "anthropic", "ollama")').classes('flex-1 input')
+                openmind.key_input = ui.input('API Key', password=True).classes('flex-1 input')
+            with ui.row().classes('items-center'):
+                ui.button('Add API Key', on_click=openmind.add_api_key).classes('api-action')
+                ui.button('List API Keys', on_click=openmind.list_api_keys).classes('api-action')
             keys_container = ui.column().classes('w-full')
-            openmind.keys_container = keys_container  # pass the container to OpenMind
+            openmind.keys_container = keys_container
 
-    # footer as input field and with external markdown link
-    with ui.footer().classes('footer'), ui.column().classes('footer'):
+    # ---------------------------------------------------------------- footer
+    with ui.footer().classes('footer'), ui.column().classes('footer w-full'):
         with ui.row().classes('w-full no-wrap items-center'):
-            text = ui.input(placeholder='Enter text here').classes('input').on('keydown.enter', send)  # input field with enter key event
-        ui.markdown('[easyAGI](https://rage.pythai.net)').classes('footer-link')
+            text = ui.input(placeholder='Enter text here').classes('input').on('keydown.enter', send)
+        ui.markdown('[easyAGI](https://rage.pythai.net) — a PYTHAI project').classes('footer-link')
 
-    # openmind internal reasoning asynchronous task ensuring non-blocking execution and efficient concurrency
-    asyncio.create_task(openmind.main_loop())
+    # ------------------------------------------------- reasoning trace feed
+    async def consume_trace():
+        while True:
+            event = await openmind.trace_queue.get()
+            try:
+                if trace_container.client.connected:
+                    _trace_row(trace_container, event)
+            except Exception as e:
+                logging.debug(f"trace render error: {e}")
 
-logging.debug("starting easyAGI")
-ui.run(title='easyAGI')
+    # one consumer per page; replace any previous page's consumer
+    previous = getattr(openmind, '_trace_consumer', None)
+    if previous is not None:
+        previous.cancel()
+    openmind._trace_consumer = asyncio.create_task(consume_trace())
 
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        logging.info("Shutting down...")
+    refresh_providers()
+    on_provider_change()
+
+
+def run():
+    """Start the ezAGI console (console script entry point)."""
+    logging.info("starting ezAGI")
+    ui.run(title='ezAGI', reload=False)
+
+
+if __name__ in {'__main__', '__mp_main__'}:
+    run()

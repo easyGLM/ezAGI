@@ -307,3 +307,34 @@ header {
         font-size: 1rem;
     }
 }
+
+/* ---- ezAGI console (v1.0.0) ---- */
+.console-header {
+    gap: 0.75rem;
+    padding: 0.25rem 1rem;
+}
+.console-select {
+    min-width: 10rem;
+}
+.console-model {
+    min-width: 16rem;
+}
+.token-counter {
+    font-family: monospace;
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+.trace-container {
+    font-size: 0.9rem;
+}
+.trace-row {
+    font-family: monospace;
+    padding: 0.1rem 0.4rem;
+}
+.trace-premise { border-left: 3px solid #4a90d9; }
+.trace-generated { border-left: 3px solid #7bb37b; }
+.trace-challenge { border-left: 3px solid #d98a4a; }
+.trace-attempt { opacity: 0.7; font-style: italic; }
+.trace-conclusion { border-left: 4px solid #2e7d32; margin: 0.4rem 0; }
+.trace-internal { border-left: 4px solid #6a5acd; margin: 0.4rem 0; }
+.console-drawer { padding: 1rem; }
