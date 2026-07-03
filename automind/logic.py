@@ -9,12 +9,69 @@
 # store modus ponens as fact in {fact_data['timestamp']}_fact.json
 # logic TRUTH
 # store truth as truth in {truth_data['timestamp']}_truth.json
+import ast
+import re
 import itertools
 import logging
 import datetime
 import pathlib
 import json
 from memory.memory import create_memory_folders, save_valid_truth, store_in_stm, DialogEntry
+
+# word-infix connectives rewritten to python-evaluable forms before parsing
+_INFIX_REWRITES = [
+    (re.compile(r'(\w+)\s+xor\s+(\w+)'), r'(\1 != \2)'),
+    (re.compile(r'(\w+)\s+nand\s+(\w+)'), r'(not (\1 and \2))'),
+    (re.compile(r'(\w+)\s+nor\s+(\w+)'), r'(not (\1 or \2))'),
+    (re.compile(r'(\w+)\s+implication\s+(\w+)'), r'((not \1) or \2)'),
+]
+
+class SafeBooleanEvaluator(ast.NodeVisitor):
+    """
+    Evaluate a propositional expression over boolean variable assignments
+    without eval(): only and/or/not, ==/!=, parentheses, names and booleans.
+    """
+    def __init__(self, values):
+        self.values = values
+
+    def evaluate(self, expr):
+        for pattern, replacement in _INFIX_REWRITES:
+            expr = pattern.sub(replacement, expr)
+        tree = ast.parse(expr, mode='eval')
+        return bool(self.visit(tree.body))
+
+    def visit_BoolOp(self, node):
+        results = [self.visit(v) for v in node.values]
+        if isinstance(node.op, ast.And):
+            return all(results)
+        if isinstance(node.op, ast.Or):
+            return any(results)
+        raise ValueError("unsupported boolean operator")
+
+    def visit_UnaryOp(self, node):
+        if isinstance(node.op, ast.Not):
+            return not self.visit(node.operand)
+        raise ValueError("unsupported unary operator")
+
+    def visit_Compare(self, node):
+        if len(node.ops) != 1 or not isinstance(node.ops[0], (ast.Eq, ast.NotEq)):
+            raise ValueError("unsupported comparison")
+        left = self.visit(node.left)
+        right = self.visit(node.comparators[0])
+        return left == right if isinstance(node.ops[0], ast.Eq) else left != right
+
+    def visit_Name(self, node):
+        if node.id in self.values:
+            return bool(self.values[node.id])
+        raise NameError(f"unknown variable: {node.id}")
+
+    def visit_Constant(self, node):
+        if isinstance(node.value, bool):
+            return node.value
+        raise ValueError("only boolean constants are allowed")
+
+    def generic_visit(self, node):
+        raise ValueError(f"disallowed expression element: {type(node).__name__}")
 
 class LogicTables:
     def __init__(self):
@@ -122,22 +179,23 @@ class LogicTables:
             json.dump(truth_data, file)
 
     def evaluate_expression(self, expr, values):
-        allowed_operators = {
-            'and': lambda x, y: x and y,
-            'or': lambda x, y: x or y,
-            'not': lambda x: not x,
-            'xor': lambda x, y: x ^ y,
-            'nand': lambda x, y: not (x and y),
-            'nor': lambda x, y: not (x or y),
-            'implication': lambda x, y: not x or y
-        }
-
         try:
-            result = eval(expr, {"__builtins__": None}, {**allowed_operators, **values})
+            result = SafeBooleanEvaluator(values).evaluate(expr)
             self.log(f"Evaluated expression '{expr}' with values {values}: {result}")
             return result
         except Exception as e:
             self.log(f"Error evaluating expression '{expr}': {e}", level='error')
+            return False
+
+    def is_propositional(self, expr):
+        """
+        True when expr parses as a propositional expression over the known
+        variables — the gate for using truth tables instead of LLM judgment.
+        """
+        try:
+            SafeBooleanEvaluator({var: True for var in self.variables}).evaluate(expr)
+            return True
+        except Exception:
             return False
 
     def generate_truth_table(self):
@@ -207,6 +265,11 @@ class LogicTables:
         return None
 
     def unify_variables(self, fact1, fact2):
+        # plain-string premises unify when they are the same statement
+        if isinstance(fact1, str) or isinstance(fact2, str):
+            if isinstance(fact1, str) and isinstance(fact2, str):
+                return fact1.strip().lower() == fact2.strip().lower()
+            return False
         if (set(fact1['arguments']).intersection(set(fact2['relation'])) or
             set(fact2['arguments']).intersection(set(fact1['relation']))):
             return False

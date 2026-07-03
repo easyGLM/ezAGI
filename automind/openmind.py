@@ -3,19 +3,23 @@
 # internal reasoning loop for continuous AGI reasoning without user interaction
 # openmind internal reasoning asynchronous task ensuring non-blocking execution and efficient concurrency
 # modular integration of automind reasoning with memory
-# webmind for API and llama3 handling of input response from various LLM
-# log internal reasoning conclusion     ./memory/logs/thoughts.json
-# log not premise                       ./memory/logs/notpremise.json
-# log short term memory input response  ./memory/stm/{timestamp}memory.json 
+# webmind for API and model handling of input response from various LLM
+# providers: openai, groq, together, anthropic, ollama (local) and ollama-cloud
+# all logs are memories:
+#   internal reasoning conclusion      ./memory/logs/thoughts.json
+#   not premise                        ./memory/logs/notpremise.json
+#   short term memory input response   ./memory/stm/{timestamp}memory.json
 
 import os
 import time
 from datetime import datetime
 from nicegui import ui  # importing ui for easyAGI
-from memory.memory import create_memory_folders, store_in_stm, save_conversation_memory, save_internal_reasoning, DialogEntry, save_valid_truth
-from webmind.ollama_handler import OllamaHandler  # Import OllamaHandler for modular Ollama interactions
+from memory.memory import (create_memory_folders, store_in_stm, save_conversation_memory,
+                           save_internal_reasoning, DialogEntry, save_valid_truth, append_json_log)
+from webmind.ollama_handler import OllamaHandler, OLLAMA_CLOUD_MODELS
 from automind.automind import FundamentalAGI
-from webmind.chatter import GPT4o, GroqModel, TogetherModel
+from webmind.chatter import (GPT4o, GroqModel, TogetherModel, AnthropicModel, OllamaModel,
+                             resolve_chatter, check_ollama_running, DEFAULT_MODELS, KNOWN_MODELS)
 from webmind.api import APIManager
 import ujson as json
 import asyncio
@@ -25,21 +29,40 @@ import httpx
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
+# sentinel pushed into the token queue when a conclusion attempt restarts
+STREAM_RESET = object()
+
+
 class OpenMind:
     def __init__(self):
         self.api_manager = APIManager()
         self.agi_instance = None
         self.initialize_memory()
         self.message_container = ui.column()
-        self.ollama_handler = OllamaHandler()  # initialize OllamaHandler instance
+        self.ollama_handler = OllamaHandler()  # local endpoint handler
         self.internal_queue = asyncio.Queue()
         self.prompt = ""  # Initialize an empty prompt field
         self.keys_container = ui.column()  # initialize keys_container
         self.log = None  # placeholder for log
         self.initialization_warning_shown = False
 
+        # console state: provider/model, sampling, token accounting, reasoning trace
+        self.current_provider = None
+        self.current_model = None
+        self.temperature = None
+        self.max_tokens = None
+        self.session_tokens = {"last_in": 0, "last_out": 0, "total": 0}
+        self.trace_queue = asyncio.Queue()   # reasoning-trace events for the UI panel
+        self.reasoning_state = "idle"        # idle | thinking
+
+        # autonomous-loop stuck guard
+        self._last_reasoned_prompt = None
+        self._same_prompt_count = 0
+
     def initialize_memory(self):
         create_memory_folders()
+
+    # ------------------------------------------------------------------ keys
 
     def use_api_key(self, service, key):
         self.api_manager.api_keys[service] = key
@@ -50,7 +73,7 @@ class OpenMind:
         logging.info(f'Using API key for {service}')
 
     def add_api_key(self):
-        service = self.service_input.value.strip()
+        service = self.service_input.value.strip().lower()
         api_key = self.key_input.value.strip()
         logging.debug(f"Adding API key for {service}: {api_key[:4]}...{api_key[-4:]}")
         if service and api_key:
@@ -80,14 +103,13 @@ class OpenMind:
     def list_api_keys(self):
         if self.api_manager.api_keys:
             keys_list = [(service, key) for service, key in self.api_manager.api_keys.items()]
-            logging.debug(f"Stored API keys: {keys_list}")
+            logging.debug(f"Stored API keys: {[s for s, _ in keys_list]}")
             if self.keys_container.client.connected:
                 self.keys_container.clear()
                 for service, key in keys_list:
                     with self.keys_container:
                         ui.label(f"{service}: {key[:4]}...{key[-4:]}").classes('flex-1')
                         ui.button('Delete', on_click=lambda s=service: self.delete_api_key(s)).classes('ml-4')
-                ui.notify('Stored API keys:\n' + "\n".join([f"{service}: {key[:4]}...{key[-4:]}" for service, key in keys_list]))
         else:
             if self.keys_container.client.connected:
                 ui.notify('No API keys in storage')
@@ -95,116 +117,100 @@ class OpenMind:
                 with self.keys_container:
                     ui.label('No API keys in storage')
 
-    def select_model(self, model_name):
+    # -------------------------------------------------------- model selection
+
+    def available_providers(self):
+        """
+        Providers usable right now: those with stored keys, ollama-cloud when
+        an ollama key is stored, and the local daemon when it responds.
+        """
+        providers = []
+        for service in ("openai", "groq", "together", "anthropic"):
+            if self.api_manager.get_api_key(service):
+                providers.append(service)
+        if self.api_manager.get_api_key("ollama"):
+            providers.append("ollama-cloud")
+        if check_ollama_running():
+            providers.append("ollama")
+        return providers
+
+    def models_for(self, provider):
+        """Model choices for the selector: curated lists, live list for local ollama."""
+        if provider == "ollama":
+            return OllamaHandler().list_models() or [DEFAULT_MODELS["ollama"]]
+        if provider == "ollama-cloud":
+            return list(OLLAMA_CLOUD_MODELS)
+        return list(KNOWN_MODELS.get(provider, [DEFAULT_MODELS.get(provider)]))
+
+    def select_model(self, provider, model=None):
+        """
+        Select a provider (and optionally a model) for the AGI instance.
+        """
         def notify_user(message, message_type='info'):
             if self.message_container.client.connected:
                 with self.message_container:
                     ui.notify(message, type=message_type)
 
-        def log_and_notify(message, level='info', message_type='info'):
-            if level == 'debug':
-                logging.debug(message)
-            elif level == 'warning':
-                logging.warning(message)
-            notify_user(message, message_type)
+        key_service = "ollama" if provider == "ollama-cloud" else provider
+        if provider not in ("ollama",) and not self.api_manager.get_api_key(key_service):
+            notify_user(f'{provider} API key not found. Please add the key first.', 'negative')
+            logging.warning(f'{provider} API key not found')
+            return
 
-        # Clean up any existing AGI instance or chatter model
-        if hasattr(self, 'agi_instance') and self.agi_instance is not None:
-            self.agi_instance = None
+        chatter = resolve_chatter(self.api_manager, provider=provider, model=model)
+        if chatter is None:
+            notify_user(f'Failed to initialize AGI with {provider}', 'negative')
+            logging.warning(f'Failed to initialize AGI with {provider}')
+            return
 
-        model_initialized = False
+        self._apply_sampling(chatter)
+        self.agi_instance = FundamentalAGI(chatter)
+        self.current_provider = chatter.provider
+        self.current_model = chatter.get_current_model()
+        notify_user(f'Using {chatter.provider} ({self.current_model}) for AGI')
+        logging.info(f'AGI initialized with {chatter.provider} ({self.current_model})')
 
-        if model_name == 'openai':
-            openai_key = self.api_manager.get_api_key('openai')
-            if openai_key:
-                chatter = GPT4o(openai_key)  # openai
-                self.agi_instance = FundamentalAGI(chatter)
-                log_and_notify('Using OpenAI for AGI')
-                model_initialized = True
-            else:
-                log_and_notify('OpenAI API key not found. Please add the key first.', 'warning', 'negative')
+    def set_sampling(self, temperature=None, max_tokens=None):
+        """Wire the console sampling controls into the active chatter."""
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        if self.agi_instance is not None:
+            self._apply_sampling(self.agi_instance.agi.chatter)
 
-        if model_name == 'groq' and not model_initialized:
-            groq_key = self.api_manager.get_api_key('groq')
-            if groq_key:
-                chatter = GroqModel(groq_key)  # groq
-                self.agi_instance = FundamentalAGI(chatter)
-                log_and_notify('Using Groq for AGI')
-                model_initialized = True
-            else:
-                log_and_notify('Groq API key not found. Please add the key first.', 'warning', 'negative')
-
-        if model_name == 'together' and not model_initialized:
-            together_key = self.api_manager.get_api_key('together')
-            if together_key:
-                chatter = TogetherModel(together_key)  # together
-                self.agi_instance = FundamentalAGI(chatter)
-                log_and_notify('Using Together AI for AGI')
-                model_initialized = True
-            else:
-                log_and_notify('Together AI API key not found. Please add the key first.', 'warning', 'negative')
-
-        if not model_initialized:
-            log_and_notify(f'Failed to initialize AGI with {model_name}', 'warning', 'negative')
+    def _apply_sampling(self, chatter):
+        if hasattr(chatter, 'set_sampling'):
+            chatter.set_sampling(temperature=self.temperature, max_tokens=self.max_tokens)
 
     def initialize_agi(self):
-        openai_key = self.api_manager.get_api_key('openai')
-        groq_key = self.api_manager.get_api_key('groq')
-        together_key = self.api_manager.get_api_key('together')
-        llama_running = self.check_llama_running()
-
-        if openai_key:
-            chatter = GPT4o(openai_key)
+        """
+        Resolve a chatter cloud-first with the local Ollama daemon as failsafe.
+        """
+        chatter = resolve_chatter(self.api_manager)
+        if chatter is not None:
+            self._apply_sampling(chatter)
             self.agi_instance = FundamentalAGI(chatter)
+            self.current_provider = chatter.provider
+            self.current_model = chatter.get_current_model()
+            self.initialization_warning_shown = False
             if self.message_container.client.connected:
                 with self.message_container:
-                    ui.notify('Using OpenAI for ezAGI')
-            logging.debug("AGI initialized with OpenAI")
-        elif groq_key:
-            chatter = GroqModel(groq_key)
-            self.agi_instance = FundamentalAGI(chatter)
-            if self.message_container.client.connected:
-                with self.message_container:
-                    ui.notify('Using Groq for ezAGI')
-            logging.debug("AGI initialized with Groq")
-        elif together_key:
-            chatter = TogetherModel(together_key)
-            self.agi_instance = FundamentalAGI(chatter)
-            if self.message_container.client.connected:
-                with self.message_container:
-                    ui.notify('Using Together AI for ezAGI')
-            logging.debug("AGI initialized with Together AI")
-        elif llama_running:
-            # Call ollama_handler to list models when LLaMA is found running
-            models = self.ollama_handler.list_models()
-            if models:
-                model_list = ", ".join(models)
-                if self.message_container.client.connected:
-                    with self.message_container:
-                        ui.notify(f'LLaMA found running. Models available: {model_list}')
-                logging.debug(f"LLaMA running on localhost:11434. Models available: {model_list}")
-            else:
-                if self.message_container.client.connected:
-                    with self.message_container:
-                        ui.notify('LLaMA found running, but no models are available.')
-                logging.debug("LLaMA running on localhost:11434, but no models are available")
+                    ui.notify(f'Using {chatter.provider} ({self.current_model}) for ezAGI')
+            logging.debug(f"AGI initialized with {chatter.provider} ({self.current_model})")
         else:
             self.agi_instance = None
+            self.current_provider = None
+            self.current_model = None
             if not self.initialization_warning_shown:
                 if self.message_container.client.connected:
                     with self.message_container:
-                        ui.notify('No valid API key or LLaMA instance found. Please add an API key or start LLaMA')
-                logging.debug("No valid API key or LLaMA instance found. AGI not initialized")
+                        ui.notify('No valid API key or Ollama instance found. Please add an API key or start Ollama')
+                logging.debug("No valid API key or Ollama instance found. AGI not initialized")
                 self.initialization_warning_shown = True
 
     def check_llama_running(self):
-        try:
-            response = httpx.get('http://localhost:11434')
-            if response.status_code == 200:
-                return True
-        except httpx.RequestError as e:
-            logging.debug(f"LLaMA connection failed: {e}")
-        return False
+        return check_ollama_running()
+
+    # ------------------------------------------------------------- reasoning
 
     async def get_conclusion_from_agi(self, prompt):
         """
@@ -212,8 +218,9 @@ class OpenMind:
         This method is asynchronous to allow non-blocking operations
         """
         if self.agi_instance is None:
-            return "AGI not initialized. Please add an API key or start LLaMA"
-        conclusion = await asyncio.get_event_loop().run_in_executor(None, self.agi_instance.get_conclusion_from_agi, prompt)
+            return "AGI not initialized. Please add an API key or start Ollama"
+        conclusion = await asyncio.get_event_loop().run_in_executor(
+            None, self.agi_instance.get_conclusion_from_agi, prompt)
         return conclusion
 
     def communicate_response(self, conclusion):
@@ -223,73 +230,86 @@ class OpenMind:
         self.display_internal_conclusion(conclusion)
         return conclusion
 
+    def _account_usage(self, response_text=""):
+        """Update session token counters from the active chatter's last_usage."""
+        usage = None
+        if self.agi_instance is not None:
+            usage = getattr(self.agi_instance.agi.chatter, 'last_usage', None)
+        if not usage or usage.get("output_tokens") is None:
+            usage = {"input_tokens": 0, "output_tokens": max(1, len(response_text) // 4)}
+        self.session_tokens["last_in"] = usage.get("input_tokens") or 0
+        self.session_tokens["last_out"] = usage.get("output_tokens") or 0
+        self.session_tokens["total"] += (usage.get("input_tokens") or 0) + (usage.get("output_tokens") or 0)
+
+    def _trace(self, event_type, payload):
+        """Queue a reasoning-trace event for the UI panel (thread-safe)."""
+        entry = {"type": event_type, "time": datetime.now().strftime('%H:%M:%S'), **payload}
+        try:
+            loop = getattr(self, '_ui_loop', None)
+            if loop is not None and loop.is_running():
+                loop.call_soon_threadsafe(self.trace_queue.put_nowait, entry)
+            else:
+                self.trace_queue.put_nowait(entry)
+        except Exception as e:
+            logging.debug(f"trace queue error: {e}")
+
     async def reasoning_loop(self):
         """
-        Internal reasoning loop for continuous AGI reasoning without user interaction
-        adding a prompt to AGI processesing its conclusion periodically
-        The conclusions are currently displayed in the response window and saved to ./memory/logs/thoughts.json including ./memory/logs/notpremise.json
+        Internal reasoning loop for continuous AGI reasoning without user interaction.
+        Conclusions are shown in the reasoning panel and saved to ./memory/logs/thoughts.json
+        (not premise results go to ./memory/logs/notpremise.json).
+        Idles when there is no prompt and stops re-reasoning an unchanged prompt
+        after three autonomous passes.
         """
         while True:
             if self.agi_instance is None:
-                openai_key = self.api_manager.get_api_key('openai')
-                groq_key = self.api_manager.get_api_key('groq')
-                together_key = self.api_manager.get_api_key('together')
-                llama_running = self.check_llama_running()
-                if openai_key or groq_key or together_key or llama_running:
-                    self.initialize_agi()
-                else:
+                self.initialize_agi()
+                if self.agi_instance is None:
                     if not self.initialization_warning_shown:
-                        logging.debug("Waiting for API key or LLaMA instance...")
-                        if self.message_container.client.connected:
-                            with self.message_container:
-                                ui.notify('AGI not initialized. Add an API key or start LLaMA.')
+                        logging.debug("Waiting for API key or Ollama instance...")
                         self.initialization_warning_shown = True
                     await asyncio.sleep(30)  # Wait before checking again
                     continue
 
-            prompt = self.prompt  # Use the updated prompt from user input
+            prompt = self.prompt
+            if not prompt.strip():
+                await asyncio.sleep(10)  # nothing to reason about yet
+                continue
+            if prompt == self._last_reasoned_prompt and self._same_prompt_count >= 3:
+                await asyncio.sleep(10)  # already reasoned this prompt to rest
+                continue
+            if prompt == self._last_reasoned_prompt:
+                self._same_prompt_count += 1
+            else:
+                self._last_reasoned_prompt = prompt
+                self._same_prompt_count = 1
+
+            self.reasoning_state = "thinking"
             conclusion = await self.get_conclusion_from_agi(prompt)
+            self.reasoning_state = "idle"
             self.display_internal_conclusion(conclusion)
+            self._account_usage(conclusion)
             save_internal_reasoning({"timestamp": int(time.time()), "prompt": prompt, "conclusion": conclusion})
-            if self.message_container.client.connected:
-                with self.message_container:
-                    ui.notify('Reasoning loop conclusion saved')
 
             await asyncio.sleep(10)  # Adjust the delay as necessary
 
     def display_internal_conclusion(self, conclusion):
         """
-        Display internal reasoning conclusion in the response window and log it to a JSON file
+        Route an internal reasoning conclusion to the trace panel and the
+        thoughts/notpremise memory logs (all logs are memories).
         """
         if conclusion != "No premises available for logic as conclusion":
-            if self.message_container.client.connected:
-                with self.message_container:
-                    response_message = ui.chat_message(name='intr', sent=False)
-                    response_message.clear()
-                    with response_message:
-                        ui.html(f"{conclusion}")
+            self._trace("internal_conclusion", {"conclusion": conclusion})
             logging.info(f"Internal reasoning conclusion: {conclusion}")
 
-        # Determine which log file to write to
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "conclusion": conclusion
         }
-        
         if conclusion == "No premises available for logic as conclusion.":
-            log_file_path = "./memory/logs/notpremise.json"
+            append_json_log("./memory/logs/notpremise.json", log_entry)
         else:
-            log_file_path = "./memory/logs/thoughts.json"
-
-        if not os.path.exists(log_file_path):
-            with open(log_file_path, 'w') as file:
-                json.dump([log_entry], file, indent=4)
-        else:
-            with open(log_file_path, 'r+') as file:
-                data = json.load(file)
-                data.append(log_entry)
-                file.seek(0)
-                json.dump(data, file, indent=4)
+            append_json_log("./memory/logs/thoughts.json", log_entry)
 
         # Also log the conclusions to conclusions.txt
         with open('./memory/logs/conclusions.txt', 'a') as file:
@@ -299,6 +319,7 @@ class OpenMind:
         """
         Main loop to handle both internal reasoning and user input.
         """
+        self._ui_loop = asyncio.get_running_loop()
         reasoning_task = asyncio.create_task(self.reasoning_loop())
         reasoning_task.add_done_callback(self._handle_task_result)
 
@@ -307,41 +328,102 @@ class OpenMind:
             if prompt == 'exit':
                 break
             self.prompt = prompt  # Update the prompt with the new input
-            conclusion = await self.get_conclusion_from_agi(prompt)
-            self.communicate_response(conclusion)
-            # Save the input-response pair using save_conversation_memory
-            save_conversation_memory({"dialog": {"instruction": prompt, "response": conclusion}})
+            self._last_reasoned_prompt = None  # new input resets the autonomous guard
+            self._same_prompt_count = 0
 
     async def send_message(self, question):
-        if self.message_container.client.connected:
+        """
+        Production interaction: stream the reasoned answer into the main chat
+        window while SocraticReasoning trace events flow to the reasoning panel.
+        """
+        if not self.message_container.client.connected:
+            return
+        with self.message_container:
+            ui.chat_message(text=question, name='query', sent=True)
+            response_message = ui.chat_message(name='ezAGI', sent=False)
+            spinner = ui.spinner(type='dots')
+
+        if self.agi_instance is None:
+            self.initialize_agi()
+        if self.agi_instance is None:
             with self.message_container:
-                ui.chat_message(text=question, name='query', sent=True)
-                response_message = ui.chat_message(name='ezAGI', sent=False)
-                spinner = ui.spinner(type='dots')
+                response_message.clear()
+                with response_message:
+                    ui.html("AGI not initialized. Please add an API key or start Ollama")
+                self.message_container.remove(spinner)
+            return
+
+        loop = asyncio.get_running_loop()
+        self._ui_loop = loop
+        token_queue = asyncio.Queue()
+        reasoning = self.agi_instance.agi.reasoning
+
+        def on_token(chunk):
+            loop.call_soon_threadsafe(token_queue.put_nowait, chunk)
+
+        def on_event(event_type, payload):
+            if event_type == "conclusion_attempt" and payload.get("attempt", 1) > 1:
+                loop.call_soon_threadsafe(token_queue.put_nowait, STREAM_RESET)
+            self._trace(event_type, payload)
+
+        reasoning.on_token = on_token
+        reasoning.on_event = on_event
+        self.reasoning_state = "thinking"
 
         try:
-            conclusion = await self.get_conclusion_from_agi(question)
-            if response_message and self.message_container.client.connected:
+            conclusion_future = loop.run_in_executor(
+                None, self.agi_instance.get_conclusion_from_agi, question)
+
+            streamed = ""
+            last_render = 0.0
+            while True:
+                done = conclusion_future.done() and token_queue.empty()
+                if done:
+                    break
+                try:
+                    item = await asyncio.wait_for(token_queue.get(), timeout=0.25)
+                except asyncio.TimeoutError:
+                    continue
+                if item is STREAM_RESET:
+                    streamed = ""
+                else:
+                    streamed += item
+                now = time.monotonic()
+                if now - last_render > 0.1 and self.message_container.client.connected:
+                    last_render = now
+                    response_message.clear()
+                    with response_message:
+                        ui.html(streamed)
+
+            conclusion = await conclusion_future
+
+            if self.message_container.client.connected:
                 response_message.clear()
                 with response_message:
                     ui.html(conclusion)
 
-            await self.run_javascript_with_retry('window.scrollTo(0, document.body.scrollHeight)', retries=3, timeout=30.1)
+            self._account_usage(conclusion)
+
+            await self.run_javascript_with_retry(
+                'window.scrollTo(0, document.body.scrollHeight)', retries=3, timeout=30.1)
 
             # Store the dialog entry
             entry = DialogEntry(question, conclusion)
             store_in_stm(entry)
-            # saves conversation following each input response to ./memory/stm/timestampmemory.json from memory.py
+            # saves conversation following each input response to ./memory/stm/timestampmemory.json
             save_conversation_memory({"dialog": {"instruction": question, "response": conclusion}})
         except Exception as e:
             logging.error(f"Error getting conclusion from easyAGI: {e}")
             if self.log:
                 self.log.push(f"Error getting conclusion from easyAGI: {e}")
         finally:
+            reasoning.on_token = None
+            reasoning.on_event = None
+            self.reasoning_state = "idle"
             try:
                 if self.message_container.client.connected:
                     self.message_container.remove(spinner)  # Correctly remove the spinner
-            except KeyError:
+            except (KeyError, ValueError):
                 logging.warning("Spinner element not found in message_container")
 
     async def run_javascript_with_retry(self, script, retries=5, timeout=12.0):
@@ -376,21 +458,3 @@ class OpenMind:
         except Exception as e:
             logging.error(f"Error reading log file {file_path}: {e}")
             return f"Error reading log file {file_path}: {e}"
-
-    def handle_javascript_response(self, msg):
-        request_id = msg.get('request_id')
-        result = msg.get('result', None)
-
-        if request_id is not None:
-            if result is not None:
-                JavaScriptRequest.resolve(request_id, result)
-            else:
-                # Handle the case where 'result' is missing
-                JavaScriptRequest.reject(request_id, 'Missing result in JavaScript response')
-                logging.error(f"JavaScript response missing 'result' for request_id: {request_id}. Response: {msg}")
-        else:
-            # Handle the case where 'request_id' is missing if needed
-            logging.error(f"JavaScript response missing 'request_id'. Response: {msg}")
-
-        # Log the entire message for debugging purposes
-        logging.debug(f"Received JavaScript response: {msg}")

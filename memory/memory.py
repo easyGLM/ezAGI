@@ -71,6 +71,22 @@ def save_valid_truth(valid_truth):
     with open(filepath, "w") as file:
         ujson.dump(valid_truth, file)
 
+# append an entry to a JSON-array log file with a safe read-modify-write
+# (tolerates a missing or corrupt file) — all logs are memories
+def append_json_log(filepath, entry):
+    create_memory_folders()
+    pathlib.Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(filepath, "r") as file:
+            data = ujson.load(file)
+        if not isinstance(data, list):
+            data = [data]
+    except (FileNotFoundError, ValueError):
+        data = []
+    data.append(entry)
+    with open(filepath, "w") as file:
+        ujson.dump(data, file, indent=2)
+
 # save conversation memory as input response in short term memory folder ./memory/stm{timestamp}memory.json
 def save_conversation_memory(memory):
     create_memory_folders()

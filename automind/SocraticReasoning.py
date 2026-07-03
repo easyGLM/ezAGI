@@ -12,7 +12,7 @@ import ujson
 from datetime import datetime
 from webmind.chatter import GPT4o, GroqModel, OllamaModel
 from automind.logic import LogicTables
-from memory.memory import create_memory_folders, store_in_stm, DialogEntry
+from memory.memory import create_memory_folders, store_in_stm, DialogEntry, save_valid_truth, append_json_log
 from webmind.api import APIManager
 
 class SocraticReasoning:
@@ -53,15 +53,30 @@ class SocraticReasoning:
         self.premises_file = './memory/logs/premises.json'
         self.not_premises_file = './memory/logs/notpremise.json'
         self.conclusions_file = './memory/logs/conclusions.txt'
-        self.truth_tables_file = './memory/logs/truth.json'
+        self.truth_tables_file = './memory/logs/truth.json'          # validated truths (JSON array)
+        self.truth_tables_state_file = './memory/logs/truth_tables.json'  # logic-table snapshots
 
         self.max_tokens = 100  # Default max tokens for Socratic premise from add_premise(statement)
         self.chatter = chatter  # Chatter model for generating responses
         self.logic_tables = LogicTables()  # Logic tables for reasoning
         self.dialogue_history = []  # List to hold the history of dialogues
         self.logical_conclusion = ""  # Variable to store the conclusion
+        self.last_confidence = 0.0  # Confidence of the most recent conclusion
+        self.on_event = None  # optional observer callback(event_type: str, payload: dict) for live reasoning traces
+        self.on_token = None  # optional callback(str) streaming the conclusion generation token by token
 
         create_memory_folders()  # Ensure memory folders are created
+
+    def _emit(self, event_type, payload):
+        """
+        Notify the trace observer (UI reasoning panel); never disturbs reasoning.
+        """
+        if self.on_event is None:
+            return
+        try:
+            self.on_event(event_type, payload)
+        except Exception as e:
+            self.logger.debug(f"trace observer error: {e}")
 
     def socraticlogs(self, message, level='info'):
         """
@@ -129,6 +144,7 @@ class SocraticReasoning:
         if self.parse_statement(premise):  # Check if the premise is valid
             self.premises.append(premise)  # Add the premise to the list
             self.save_premises()  # Save the updated list of premises
+            self._emit("premise", {"premise": premise})
         else:
             self.log_not_premise(f'Invalid premise: {premise}', level='error')  # Log invalid premise
 
@@ -156,7 +172,9 @@ class SocraticReasoning:
         """
         premise_text = f"- {premise}"
         new_premise = self.chatter.generate_response(premise_text)
-        return new_premise.strip()
+        new_premise = new_premise.strip()
+        self._emit("generated_premise", {"premise": new_premise})
+        return new_premise
 
     def challenge_premise(self, premise):
         """
@@ -168,6 +186,7 @@ class SocraticReasoning:
         if premise in self.premises:  # Check if the premise exists in the list
             self.premises.remove(premise)  # Remove the premise from the list
             self.socraticlogs(f'Challenged and removed premise: {premise}')  # Log the removal
+            self._emit("challenge", {"premise": premise})
             self.remove_equivalent_premises(premise)  # Remove equivalent premises
             self.save_premises()  # Save the updated list of premises
         else:
@@ -198,6 +217,7 @@ class SocraticReasoning:
 
         current_premise = self.premises[0]  # Start with the first premise
         additional_premises_count = 0  # Counter for additional premises
+        validated = False
 
         # Generate new premises until a valid conclusion is drawn or the maximum limit is reached
         while additional_premises_count < 5:
@@ -208,8 +228,13 @@ class SocraticReasoning:
             self.save_premises()
             additional_premises_count += 1
 
-            # Use the current premise as the input (knowledge) for generating a response
-            raw_response = self.chatter.generate_response(current_premise)
+            # Use the current premise as the input (knowledge) for generating a response,
+            # streaming tokens to the observer when one is attached
+            self._emit("conclusion_attempt", {"attempt": additional_premises_count})
+            if self.on_token is not None and hasattr(self.chatter, 'generate_response_with_tokens'):
+                raw_response = self.chatter.generate_response_with_tokens(current_premise, self.on_token)
+            else:
+                raw_response = self.chatter.generate_response(current_premise)
 
             # Process the response to get the conclusion
             conclusion = raw_response.strip()
@@ -217,6 +242,7 @@ class SocraticReasoning:
             self.logical_conclusion = conclusion  # Store the conclusion
 
             if self.validate_conclusion():  # Validate the conclusion
+                validated = True
                 break
             else:
                 self.log_not_premise('Invalid conclusion. Generating more premises.', level='error')
@@ -232,8 +258,24 @@ class SocraticReasoning:
         with open(self.conclusions_file, 'a') as file:
             file.write(f"Premises: {self.premises}\nConclusion: {self.logical_conclusion}\n")
 
-        # Save the valid conclusion as a truth
-        self.save_truth(self.logical_conclusion)
+        if validated:
+            # Save the validated conclusion as a truth and register it with the logic tables
+            self.save_truth(self.logical_conclusion)
+            self.update_logic_tables(
+                self.logic_tables.variables,
+                self.logic_tables.expressions,
+                self.logic_tables.valid_truths + [self.logical_conclusion])
+        else:
+            # An unvalidated conclusion is a belief, not a truth
+            self.last_confidence = 0.3
+            self.log_not_premise(
+                f'Unvalidated conclusion (confidence 0.3): {self.logical_conclusion}', level='error')
+
+        self._emit("conclusion", {
+            "conclusion": self.logical_conclusion,
+            "validated": validated,
+            "confidence": self.last_confidence,
+        })
 
         # Clear the premises list for the next round
         self.premises = []
@@ -242,28 +284,58 @@ class SocraticReasoning:
 
     def validate_conclusion(self):
         """
-        Validates the logical conclusion.
+        Validates the logical conclusion: truth tables for genuinely
+        propositional statements, LLM judgment for natural language.
+        Sets self.last_confidence.
 
         Returns:
             bool: True if the conclusion is valid, False otherwise.
         """
-        return self.logic_tables.tautology(self.logical_conclusion)  # Validate using logic tables
+        conclusion = self.logical_conclusion
+
+        # fast path: propositional expressions go through the truth tables
+        if self.logic_tables.variables and self.logic_tables.is_propositional(conclusion):
+            valid = self.logic_tables.tautology(conclusion)
+            self.last_confidence = 1.0 if valid else 0.4
+            self._emit("validation", {"method": "truth_table", "valid": valid,
+                                      "confidence": self.last_confidence})
+            return valid
+
+        # primary path: LLM-judged validation of the conclusion against the premises
+        premises_text = "\n".join(f"- {p}" for p in self.premises)
+        judgment_prompt = (
+            "You are validating a conclusion against its premises.\n"
+            f"Premises:\n{premises_text}\n"
+            f"Conclusion: {conclusion}\n"
+            "Does the conclusion follow from and remain consistent with the premises? "
+            "Answer exactly VALID or INVALID."
+        )
+        try:
+            verdict = self.chatter.generate_response(judgment_prompt).strip().upper()
+        except Exception as e:
+            self.socraticlogs(f"validation error: {e}", level='error')
+            self.last_confidence = 0.3
+            return False
+        valid = verdict.startswith("VALID")
+        self.last_confidence = 0.9 if valid else 0.4
+        self._emit("validation", {"method": "llm_judgment", "valid": valid,
+                                  "confidence": self.last_confidence})
+        return valid
 
     def save_truth(self, truth):
         """
-        Saves the valid conclusion as a truth in the truth tables.
+        Saves the valid conclusion as a truth (JSON-array log with confidence).
 
         Args:
             truth: The truth to be saved.
         """
         truth_tables_entry = {
             "truth": truth,
+            "confidence": self.last_confidence,
             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
-        pathlib.Path(self.truth_tables_file).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.truth_tables_file, 'a') as file:
-            ujson.dump(truth_tables_entry, file, indent=2)
-            file.write("\n")
+        append_json_log(self.truth_tables_file, truth_tables_entry)
+        save_valid_truth(truth_tables_entry)
 
     def update_logic_tables(self, variables, expressions, valid_truths):
         """
@@ -284,8 +356,8 @@ class SocraticReasoning:
             "expressions": expressions,
             "valid_truths": valid_truths
         }
-        pathlib.Path(self.truth_tables_file).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.truth_tables_file, 'w') as file:
+        pathlib.Path(self.truth_tables_state_file).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.truth_tables_state_file, 'w') as file:
             ujson.dump(truth_tables_entry, file, indent=2)
 
         # Save a timestamped file in ./memory/truth
@@ -320,6 +392,8 @@ class SocraticReasoning:
             max_tokens: The maximum number of tokens.
         """
         self.max_tokens = max_tokens
+        if hasattr(self.chatter, 'max_tokens'):
+            self.chatter.max_tokens = max_tokens
         self.socraticlogs(f"Max tokens set to: {max_tokens}")
 
     def interact(self):
