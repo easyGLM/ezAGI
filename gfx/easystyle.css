@@ -34,13 +34,15 @@ header {
     padding: 10px;
     border-radius: 0px;
     display: flex;
-    align-items: flex-start;   /* top-align content so short panels (logs) don't leave a blank gap above */
-    justify-content: center;
+    flex-direction: column;    /* stack panel content top-down */
+    align-items: stretch;      /* panels fill the width; content starts at the top (no blank gap above) */
     width: 90%; /* Default to 90% width for centering */
     max-width: 1200px;
     margin: 0 auto;
     flex-grow: 1;
     flex-basis: 0;
+    min-height: 55vh;          /* fill the space between header and footer so chat/answers are visible */
+    overflow-y: auto;          /* long conversations scroll within the panel */
     border: 0px solid #218838;
     background-color: rgba(255, 255, 255, 0.5); /* White background with 50% transparency */
 }
