@@ -131,15 +131,23 @@ def main():
 
     def refresh_status():
         tokens = openmind.session_tokens
-        thinking = openmind.reasoning_state == 'thinking'
-        out_prefix = '≈' if thinking else ''  # output is a live estimate while thinking
+        live_out = openmind._live_out               # int estimate while streaming, else None
+        streaming = live_out is not None
+        # While streaming the provider hasn't reported input yet, so show the
+        # live output estimate on its own and fold it into the session total so
+        # the cumulative figure is never smaller than the turn in progress.
+        last_in = 0 if streaming else tokens['last_in']
+        last_out = live_out if streaming else tokens['last_out']
+        session = tokens['total'] + (live_out or 0)
+        out_prefix = '≈' if streaming else ''
         token_label.set_content(
             f'<span class="tok-pill tok-in" title="input tokens, last turn">'
-            f'<span class="tok-k">in</span> {tokens["last_in"]:,}</span>'
-            f'<span class="tok-pill tok-out{" tok-live" if thinking else ""}" title="output tokens, last turn">'
-            f'<span class="tok-k">out</span> {out_prefix}{tokens["last_out"]:,}</span>'
+            f'<span class="tok-k">in</span> {last_in:,}</span>'
+            f'<span class="tok-pill tok-out{" tok-live" if streaming else ""}" title="output tokens, last turn">'
+            f'<span class="tok-k">out</span> {out_prefix}{last_out:,}</span>'
             f'<span class="tok-pill tok-total" title="total tokens this session">'
-            f'<span class="tok-k">session</span> {tokens["total"]:,}</span>')
+            f'<span class="tok-k">session</span> {session:,}</span>')
+        thinking = openmind.reasoning_state == 'thinking'
         state_chip.set_text('thinking' if thinking else 'idle')
         state_chip._props['color'] = 'primary' if thinking else 'grey'
         state_chip.update()
@@ -183,23 +191,26 @@ def main():
 
         # logs: reasoning artifacts on disk
         with ui.tab_panel(logs_tab):
-            log = ui.log().classes('w-full h-32')
-            openmind.log = log
+            # log choices — compact pills, all on one horizontal row
+            with ui.row().classes('w-full no-wrap gap-2 items-stretch'):
+                for log_name, log_path in LOG_FILES.items():
+                    accent = LOG_COLORS.get(log_name, '#4aa3df')
+                    ui.button(log_name, on_click=lambda path=log_path: view_log(path)) \
+                        .props('flat no-caps dense') \
+                        .classes('logbuttons') \
+                        .style(f'--log-accent: {accent}')
+
+            # selected log file content
             log_container = ui.column().classes('w-full')
+            # runtime push messages (compact, below the display)
+            log = ui.log().classes('w-full h-16')
+            openmind.log = log
 
             def view_log(file_path):
                 log_content = openmind.read_log_file(file_path)
                 log_container.clear()
                 with log_container:
                     ui.markdown(f"```\n{log_content}\n```").classes('w-full')
-
-            with ui.row().classes('w-full gap-3 wrap'):
-                for log_name, log_path in LOG_FILES.items():
-                    accent = LOG_COLORS.get(log_name, '#4aa3df')
-                    ui.button(log_name, on_click=lambda path=log_path: view_log(path)) \
-                        .props('flat no-caps') \
-                        .classes('logbuttons') \
-                        .style(f'--log-accent: {accent}')
 
         # API keys management
         with ui.tab_panel(api_tab):

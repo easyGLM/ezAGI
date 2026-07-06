@@ -89,6 +89,7 @@ than the last call — see [Token accounting](#token-accounting) below.
 | `temperature`, `max_tokens` | sampling controls (`None` = provider default). |
 | `session_tokens` | `{last_in, last_out, total}` shown in the header. |
 | `_usage_baseline` | snapshot of the chatter's `cumulative_usage` after the last accounted turn. |
+| `_live_out` | live output-token estimate during interactive streaming (`None` when idle); kept out of `session_tokens` so the header total stays coherent. |
 | `trace_queue`, `reasoning_state` | reasoning-trace event feed and `idle`/`thinking` state. |
 | `_last_reasoned_prompt`, `_same_prompt_count` | guard so the autonomous loop stops re-reasoning the same prompt after three passes. |
 
@@ -171,10 +172,25 @@ Instead:
   the session `total`, and advances the baseline. If a provider reports no usage
   (e.g. local Ollama), it falls back to a length estimate (`len(text) // 4`).
 
-While streaming, `send_message` also updates `session_tokens["last_out"]` live
-from the accumulated text as an **estimate** (the header marks it with `≈` and a
-pulse); `_account_usage` then reconciles to the exact per-turn totals when the
-turn completes.
+### Live estimate while streaming
+
+While a turn streams, `send_message` writes a running output estimate
+(`len(streamed) // 4`) to a **separate** field, `self._live_out` (not into
+`session_tokens`), and clears it to `None` when the turn finishes. Keeping the
+estimate apart from the committed counters is what makes the header coherent:
+
+- the interactive display shows the live estimate as the turn's `out` (marked
+  with `≈` and a pulse) while `in` reads `0` — the provider has not reported
+  input yet;
+- the displayed session total is `session_tokens["total"] + (_live_out or 0)`,
+  so the cumulative figure is **never smaller than the turn in progress**
+  (the earlier bug let a long answer's `out` exceed the shown `session`);
+- the autonomous `reasoning_loop` never sets `_live_out`, so its turns display
+  the committed numbers with no double-counting.
+
+When the turn completes, `_account_usage` folds the exact per-turn delta into
+`session_tokens` and `_live_out` is cleared, so the header snaps from estimate
+to the reconciled totals.
 
 ---
 

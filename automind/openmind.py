@@ -54,6 +54,9 @@ class OpenMind:
         self.session_tokens = {"last_in": 0, "last_out": 0, "total": 0}
         # snapshot of chatter.cumulative_usage after the last accounted turn
         self._usage_baseline = {"input_tokens": 0, "output_tokens": 0}
+        # live output-token estimate during interactive streaming (None = not streaming);
+        # kept separate from session_tokens so the header stays coherent and never double-counts
+        self._live_out = None
         self.trace_queue = asyncio.Queue()   # reasoning-trace events for the UI panel
         self.reasoning_state = "idle"        # idle | thinking
 
@@ -414,7 +417,7 @@ class OpenMind:
                     streamed += item
                 # live output-token estimate so the counter grows while thinking;
                 # reconciled to the provider's exact usage in _account_usage at completion.
-                self.session_tokens["last_out"] = max(1, len(streamed) // 4) if streamed else 0
+                self._live_out = max(1, len(streamed) // 4) if streamed else 0
                 now = time.monotonic()
                 if now - last_render > 0.1 and self.message_container.client.connected:
                     last_render = now
@@ -446,6 +449,7 @@ class OpenMind:
         finally:
             reasoning.on_token = None
             reasoning.on_event = None
+            self._live_out = None  # stop the live estimate; committed totals now drive the display
             self.reasoning_state = "idle"
             try:
                 if self.message_container.client.connected:

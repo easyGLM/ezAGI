@@ -11,7 +11,7 @@ body {
     line-height: 1.6;
 }
 
-# link style for link under chat input
+/* link style for link under chat input */
 a:link, a:visited {
     color: inherit !important;
     text-decoration: none;
@@ -28,13 +28,13 @@ header {
     font-weight: 700;
 }
 
-# response window controls main from ui.tab_panels(tabs, value=chat_tab) from .classes('response-style')
+/* response window controls main from ui.tab_panels(tabs, value=chat_tab) from .classes('response-style') */
 
 .response-style {
     padding: 10px;
     border-radius: 0px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;   /* top-align content so short panels (logs) don't leave a blank gap above */
     justify-content: center;
     width: 90%; /* Default to 90% width for centering */
     max-width: 1200px;
@@ -128,7 +128,7 @@ header {
     background-color: rgba(255, 255, 255, 0.5); /* White background with 50% transparency */
 }
 
-# control style for interaction tabs of chat, logs, apik from .classes('tabs-style')
+/* control style for interaction tabs of chat, logs, apik from .classes('tabs-style') */
 
 .tab-style {
     color: #218838; 
@@ -157,7 +157,7 @@ header {
 
 
 
-# darkmode button row style
+/* darkmode button row style */
 .darkrow {
     color: #ADD8E6;
     background-color: #1C3D5A;
@@ -207,28 +207,31 @@ header {
 /* Log choice buttons — each carries its own accent via the --log-accent
    custom property set inline per button in the UI code. */
 .logbuttons {
+    flex: 1 1 0;
+    min-width: 0;
     color: #eaf3fb !important;
     font-weight: 600;
     background: linear-gradient(135deg, #1f4460 0%, #142a3d 100%) !important;
-    font-size: 13px;
-    min-width: 168px;
-    padding: 10px 18px;
+    font-size: 11px;
+    line-height: 1.15;
+    padding: 6px 8px;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-left: 4px solid var(--log-accent, #4aa3df);
-    border-radius: 10px;
+    border-left: 3px solid var(--log-accent, #4aa3df);
+    border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
     transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .logbuttons::before {
     content: "";
+    flex: 0 0 auto;
     display: inline-block;
-    width: 9px;
-    height: 9px;
-    margin-right: 9px;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
     border-radius: 50%;
     background-color: var(--log-accent, #4aa3df);
-    box-shadow: 0 0 6px var(--log-accent, #4aa3df);
+    box-shadow: 0 0 5px var(--log-accent, #4aa3df);
 }
 
 .logbuttons:hover {
