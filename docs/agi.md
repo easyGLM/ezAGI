@@ -7,6 +7,56 @@ This document explains the reasoning core that sits below
 the `EasyAGI` terminal front end — and how "AGI" is the shared brain that both
 easyAGI (CLI) and the ezAGI console reason with.
 
+It opens with a short conceptual primer on what AGI *means* and which of its
+building blocks this codebase actually touches, then documents the classes.
+
+---
+
+## Background: what "AGI" means
+
+**Artificial General Intelligence (AGI)** is machine intelligence that can
+understand, learn, and apply knowledge across *any* domain at roughly
+human level — as opposed to **Artificial Narrow Intelligence (ANI)**, which is
+specialized to a fixed task. "Strong AI" is an older synonym for AGI.
+
+| | Narrow AI (ANI) | AGI |
+|---|---|---|
+| Scope | one task (e.g. translation, classification) | any intellectual task a human can do |
+| Adaptability | fixed model / fine-tuning | transfers knowledge, reasons about novel problems |
+| Autonomy | runs a learned pattern | sets sub-goals, plans, self-corrects |
+
+No system today is AGI. Research generally treats it as the *integration* of
+several capabilities rather than a single algorithm: scalable/transfer learning,
+internal **world models**, **memory & retrieval**, **reasoning & planning**,
+self-supervised **curiosity**, **multimodality**, and — critically —
+**robustness, alignment, and safety** (making the system's objectives reliably
+compatible with human intent). Alignment is widely regarded as the hardest and
+most urgent open problem; timelines to AGI remain genuinely uncertain and
+expert surveys give wide, disagreeing distributions rather than firm dates.
+
+### How ezAGI relates to these building blocks
+
+ezAGI is **not** an AGI — it is a small, transparent research console that
+implements a few of the ingredients above in an inspectable way. The mapping:
+
+| AGI building block | How ezAGI approaches it (today) |
+|---|---|
+| Reasoning & planning | `SocraticReasoning`: premises → conclusion → **LLM-judged validation** with a retry loop (see [SocraticReasoning.md](SocraticReasoning.md)). |
+| Memory & retrieval | `memory/` — short-term memory + logs-as-memories (`thoughts.json`, `truth.json`, STM snapshots). |
+| Scalable learning | delegated to the underlying LLM `chatter`; ezAGI adds no training of its own. |
+| Multimodality | not implemented — text in / text out. |
+| Autonomy / curiosity | the autonomous `reasoning_loop` in [`OpenMind`](openmind.md) re-reasons a prompt on its own, with a stop-guard after three passes. |
+| Robustness & safety | validated conclusions become higher-confidence "truths"; unvalidated ones stay lower-confidence "beliefs" — a modest, local guard, not alignment in the research sense. |
+
+Treat ezAGI as a **skeleton for reasoning-over-an-LLM**, useful for studying
+these mechanisms, not as a claim of general intelligence.
+
+> Terminology note: several popular references are easy to misattribute.
+> *The Alignment Problem* is by **Brian Christian**; Stuart Russell's book is
+> **Human Compatible**. When citing sources in this repo, link only pages you
+> have actually verified — hallucinated-but-plausible citations are a common
+> LLM failure mode.
+
 ---
 
 ## The three classes at a glance
@@ -141,4 +191,5 @@ the monotonic `cumulative_usage` counter used for token accounting.
 
 - [openmind.md](openmind.md) — how the console drives this AGI layer.
 - [SocraticReasoning.md](SocraticReasoning.md) — the reasoning engine internals.
+- [roadmap2agi.md](roadmap2agi.md) — repo-grounded roadmap from this console toward more general capability.
 - [lineage.md](lineage.md) — how AGI/AUTOMINDx/MASTERMIND fit the project lineage.
