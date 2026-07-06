@@ -37,6 +37,17 @@ LOG_FILES = {
     "Error Log": "./memory/logs/errorlogs.txt",
 }
 
+# per-log accent colour, surfaced through the --log-accent CSS custom property
+LOG_COLORS = {
+    "Premises Log": "#6c8cff",      # indigo
+    "Not Premise Log": "#f0a04b",   # amber
+    "Truth Log": "#3ecf8e",         # green
+    "Thoughts Log": "#b57edc",      # violet
+    "Conclusions Log": "#2dd4bf",   # teal
+    "Socratic Log": "#4aa3df",      # blue
+    "Error Log": "#ef5f6b",         # red
+}
+
 # one internal reasoning main_loop for the whole app, not one per page visit
 app.on_startup(lambda: asyncio.create_task(openmind.main_loop()))
 
@@ -176,9 +187,13 @@ def main():
                 with log_container:
                     ui.markdown(f"```\n{log_content}\n```").classes('w-full')
 
-            with ui.row().classes('w-full'):
+            with ui.row().classes('w-full gap-3 wrap'):
                 for log_name, log_path in LOG_FILES.items():
-                    ui.button(log_name, on_click=lambda path=log_path: view_log(path)).classes('logbuttons')
+                    accent = LOG_COLORS.get(log_name, '#4aa3df')
+                    ui.button(log_name, on_click=lambda path=log_path: view_log(path)) \
+                        .props('flat no-caps') \
+                        .classes('logbuttons') \
+                        .style(f'--log-accent: {accent}')
 
         # API keys management
         with ui.tab_panel(api_tab):
@@ -197,7 +212,9 @@ def main():
     with ui.footer().classes('footer'), ui.column().classes('footer w-full'):
         with ui.row().classes('w-full no-wrap items-center'):
             text = ui.input(placeholder='Enter text here').classes('input').on('keydown.enter', send)
-        ui.markdown('[easyAGI](https://rage.pythai.net) — a PYTHAI project').classes('footer-link')
+        with ui.row().classes('footer-link items-center no-wrap gap-1'):
+            ui.link('easyAGI', 'https://rage.pythai.net', new_tab=True)
+            ui.label('— a PYTHAI project')
 
     # ------------------------------------------------- reasoning trace feed
     async def consume_trace():

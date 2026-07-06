@@ -388,6 +388,9 @@ class OpenMind:
                     streamed = ""
                 else:
                     streamed += item
+                # live output-token estimate so the counter grows while thinking;
+                # reconciled to the provider's exact usage in _account_usage at completion.
+                self.session_tokens["last_out"] = max(1, len(streamed) // 4) if streamed else 0
                 now = time.monotonic()
                 if now - last_render > 0.1 and self.message_container.client.connected:
                     last_render = now
@@ -428,10 +431,8 @@ class OpenMind:
 
     async def run_javascript_with_retry(self, script, retries=5, timeout=12.0):
         for attempt in range(retries):
-            task = asyncio.create_task(ui.run_javascript(script, timeout=timeout))
-            task.add_done_callback(self._handle_task_result)
             try:
-                await task
+                await ui.run_javascript(script, timeout=timeout)
                 return
             except TimeoutError:
                 logging.warning(f"JavaScript did not respond within {timeout} s on attempt {attempt + 1}")
@@ -451,10 +452,13 @@ class OpenMind:
         """
         try:
             with open(file_path, 'r') as file:
-                return file.read()
+                content = file.read()
+            return content if content.strip() else "(no entries yet)"
         except FileNotFoundError:
-            logging.error(f"Log file not found: {file_path}")
-            return f"Log file not found: {file_path}"
+            # The log is created lazily the first time reasoning writes to it;
+            # a missing file simply means nothing has been logged yet.
+            logging.debug(f"Log file not created yet: {file_path}")
+            return "(no entries yet)"
         except Exception as e:
             logging.error(f"Error reading log file {file_path}: {e}")
             return f"Error reading log file {file_path}: {e}"

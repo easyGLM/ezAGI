@@ -204,27 +204,51 @@ header {
 }
 
 
-# Default (light mode) styles for .logbuttons
+/* Log choice buttons — each carries its own accent via the --log-accent
+   custom property set inline per button in the UI code. */
 .logbuttons {
-    color: #ADD8E6; /* Light blue text color */
-    font-weight: bold; /* Bold text */
-    background-color: #1C3D5A; /* Dark blue background color */
-    font-size: 16px; /* Font size set to 16 pixels */
-    width: 150px; /* Fixed width of 150 pixels */
-    padding: 10px; /* Padding of 10 pixels on all sides */
-    border: 2px solid #1C3D5A; /* Dark blue solid border with 2px width */
-    border-radius: 5px; /* Rounded corners with 5px radius */
-    display: flex; /* Enables flexbox layout */
-    justify-content: center; /* Centers content horizontally */
+    color: #eaf3fb !important;
+    font-weight: 600;
+    background: linear-gradient(135deg, #1f4460 0%, #142a3d 100%) !important;
+    font-size: 13px;
+    min-width: 168px;
+    padding: 10px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 4px solid var(--log-accent, #4aa3df);
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-# Dark mode styles for .logbuttons
+.logbuttons::before {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 9px;
+    border-radius: 50%;
+    background-color: var(--log-accent, #4aa3df);
+    box-shadow: 0 0 6px var(--log-accent, #4aa3df);
+}
 
+.logbuttons:hover {
+    transform: translateY(-2px);
+    border-color: var(--log-accent, #4aa3df);
+    box-shadow: 0 6px 18px -4px var(--log-accent, rgba(74, 163, 223, 0.5));
+}
+
+.logbuttons:active,
+.logbuttons:focus {
+    transform: translateY(0);
+    outline: none;
+}
+
+/* Dark mode: deepen the base gradient, keep the per-log accents intact. */
 @media (prefers-color-scheme: dark) {
     .logbuttons {
-        color: #90C3D4; /* Slightly darker blue text color */
-        background-color: #122637; /* Even darker background color */
-        border: 2px solid #122637; /* Border color matches dark mode background */
+        color: #d7e6f2 !important;
+        background: linear-gradient(135deg, #16303f 0%, #0d1c28 100%) !important;
+        border-color: rgba(255, 255, 255, 0.06);
     }
 }
 
