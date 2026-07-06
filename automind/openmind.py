@@ -52,6 +52,8 @@ class OpenMind:
         self.temperature = None
         self.max_tokens = None
         self.session_tokens = {"last_in": 0, "last_out": 0, "total": 0}
+        # snapshot of chatter.cumulative_usage after the last accounted turn
+        self._usage_baseline = {"input_tokens": 0, "output_tokens": 0}
         self.trace_queue = asyncio.Queue()   # reasoning-trace events for the UI panel
         self.reasoning_state = "idle"        # idle | thinking
 
@@ -164,6 +166,8 @@ class OpenMind:
             return
 
         self._apply_sampling(chatter)
+        # fresh chatter starts cumulative_usage at zero — realign the baseline
+        self._usage_baseline = {"input_tokens": 0, "output_tokens": 0}
         self.agi_instance = FundamentalAGI(chatter)
         self.current_provider = chatter.provider
         self.current_model = chatter.get_current_model()
@@ -188,6 +192,8 @@ class OpenMind:
         chatter = resolve_chatter(self.api_manager)
         if chatter is not None:
             self._apply_sampling(chatter)
+            # fresh chatter starts cumulative_usage at zero — realign the baseline
+            self._usage_baseline = {"input_tokens": 0, "output_tokens": 0}
             self.agi_instance = FundamentalAGI(chatter)
             self.current_provider = chatter.provider
             self.current_model = chatter.get_current_model()
@@ -231,15 +237,33 @@ class OpenMind:
         return conclusion
 
     def _account_usage(self, response_text=""):
-        """Update session token counters from the active chatter's last_usage."""
-        usage = None
-        if self.agi_instance is not None:
-            usage = getattr(self.agi_instance.agi.chatter, 'last_usage', None)
-        if not usage or usage.get("output_tokens") is None:
-            usage = {"input_tokens": 0, "output_tokens": max(1, len(response_text) // 4)}
-        self.session_tokens["last_in"] = usage.get("input_tokens") or 0
-        self.session_tokens["last_out"] = usage.get("output_tokens") or 0
-        self.session_tokens["total"] += (usage.get("input_tokens") or 0) + (usage.get("output_tokens") or 0)
+        """
+        Update session token counters for a completed turn.
+
+        A turn spans several LLM calls (proposition, conclusion, validation),
+        so we read the chatter's monotonic cumulative_usage and take the delta
+        since the previous turn — reading last_usage alone would count only the
+        final sub-call. Falls back to a length estimate if the provider reports
+        no usage (e.g. local Ollama).
+        """
+        chatter = getattr(self.agi_instance, 'agi', None) if self.agi_instance else None
+        chatter = getattr(chatter, 'chatter', None)
+        cumulative = getattr(chatter, 'cumulative_usage', None)
+
+        if cumulative is not None:
+            d_in = cumulative["input_tokens"] - self._usage_baseline["input_tokens"]
+            d_out = cumulative["output_tokens"] - self._usage_baseline["output_tokens"]
+            self._usage_baseline = dict(cumulative)
+        else:
+            d_in, d_out = 0, 0
+
+        if d_out <= 0:  # provider reported no usage for this turn — estimate
+            d_in = d_in if d_in > 0 else 0
+            d_out = max(1, len(response_text) // 4)
+
+        self.session_tokens["last_in"] = d_in
+        self.session_tokens["last_out"] = d_out
+        self.session_tokens["total"] += d_in + d_out
 
     def _trace(self, event_type, payload):
         """Queue a reasoning-trace event for the UI panel (thread-safe)."""

@@ -125,15 +125,21 @@ def main():
         ui.button(icon='refresh', on_click=refresh_providers).props('flat dense').tooltip('rescan providers')
         ui.space()
         state_chip = ui.badge('idle', color='grey')
-        token_label = ui.label('tokens — last: 0/0 · session: 0').classes('token-counter')
+        token_label = ui.html().classes('token-counter')
         ui.button(icon='tune', on_click=lambda: settings_drawer.toggle()).props('flat dense').tooltip('sampling controls')
         ui.button(icon='dark_mode', on_click=lambda: dark_mode.toggle()).props('flat dense').tooltip('toggle dark mode')
 
     def refresh_status():
         tokens = openmind.session_tokens
-        token_label.set_text(
-            f"tokens — last: {tokens['last_in']}/{tokens['last_out']} · session: {tokens['total']}")
         thinking = openmind.reasoning_state == 'thinking'
+        out_prefix = '≈' if thinking else ''  # output is a live estimate while thinking
+        token_label.set_content(
+            f'<span class="tok-pill tok-in" title="input tokens, last turn">'
+            f'<span class="tok-k">in</span> {tokens["last_in"]:,}</span>'
+            f'<span class="tok-pill tok-out{" tok-live" if thinking else ""}" title="output tokens, last turn">'
+            f'<span class="tok-k">out</span> {out_prefix}{tokens["last_out"]:,}</span>'
+            f'<span class="tok-pill tok-total" title="total tokens this session">'
+            f'<span class="tok-k">session</span> {tokens["total"]:,}</span>')
         state_chip.set_text('thinking' if thinking else 'idle')
         state_chip._props['color'] = 'primary' if thinking else 'grey'
         state_chip.update()

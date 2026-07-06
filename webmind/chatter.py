@@ -67,6 +67,9 @@ class BaseChatter:
         self.temperature = None   # None = provider default
         self.max_tokens = None    # None = provider default
         self.last_usage = None
+        # monotonic running total across every call; a turn spans several calls
+        # (proposition + conclusion + validation), so callers read the delta.
+        self.cumulative_usage = {"input_tokens": 0, "output_tokens": 0}
 
     def set_model(self, model_name):
         """Set the current model to the specified model_name."""
@@ -93,10 +96,18 @@ class BaseChatter:
         raise NotImplementedError
         yield  # pragma: no cover
 
+    def _fold_usage(self):
+        """Fold this call's last_usage into the monotonic cumulative total."""
+        u = self.last_usage
+        if u:
+            self.cumulative_usage["input_tokens"] += u.get("input_tokens") or 0
+            self.cumulative_usage["output_tokens"] += u.get("output_tokens") or 0
+
     async def generate_response_async(self, knowledge):
         pieces = []
         async for chunk in self.generate_response_stream(knowledge):
             pieces.append(chunk)
+        self._fold_usage()
         return "".join(pieces).strip()
 
     def generate_response(self, knowledge):
@@ -116,6 +127,7 @@ class BaseChatter:
             async for chunk in self.generate_response_stream(knowledge):
                 pieces.append(chunk)
                 on_token(chunk)
+            self._fold_usage()
             return "".join(pieces).strip()
         try:
             return _run_coro_sync(_collect())

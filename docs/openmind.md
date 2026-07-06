@@ -1,405 +1,217 @@
-# openmind.py (c) 2024  Gregory L. Magnusson MIT licence
-
-
-openmind.py is the core module of the EasyAGI project that handles the interaction between the user interface and the underlying augemented generative intelligence (AGI) system. This module is responsible for managing API keys, initializing AGI instances, processing user inputs, and displaying results. It integrates with various services like OpenAI, Groq, and LLaMA.
-
-# Dependencies
-
-    os: For interacting with the operating system.
-    time: For handling time-related functions.
-    datetime: For managing date and time objects.
-    asyncio: For asynchronous programming.
-    logging: For logging debug and error messages.
-    ujson: For fast JSON parsing and encoding.
-    httpx: For making HTTP requests.
-    nicegui: For building user interfaces.
-    memory.memory: For managing memory-related functions.
-    automind.automind: For AGI functionalities.
-    webmind.api: For API management.
-    webmind.chatter: For handling input response.
-
-# Classes and Methods
-
-OpenMind
-
-This class encapsulates the logic for interacting with the AGI, managing API keys, and handling user inputs.
-Initialization
-
-```python
-def __init__(self):
-    self.api_manager = APIManager()
-    self.agi_instance = None
-    self.initialize_memory()
-    self.initialize_agi()
-    self.internal_queue = asyncio.Queue()
-    self.prompt = ""  # Initialize an empty prompt field
-    self.keys_container = None  # Placeholder for keys_container
-    self.message_container = None  # Placeholder for message_container
-    self.log = None  # Placeholder for log
-```
-    api_manager: Manages API keys.
-    agi_instance: Instance of the AGI system.
-    internal_queue: Queue for handling asynchronous tasks.
-    prompt: Stores the current user prompt.
-    keys_container: Placeholder for the UI element displaying API keys.
-    message_container: Placeholder for the UI element displaying messages.
-    log: Placeholder for the log UI element.
-
-# initialize_memory
-
-Initializes memory-related folders
-
-```python
-def initialize_memory(self):
-    create_memory_folders()
-```
-
-# add_api_key
-
-Adds a new API key and updates the AGI initialization
-
-``python
-def add_api_key(self):
-    service = self.service_input.value.strip()
-    api_key = self.key_input.value.strip()
-    logging.debug(f"Adding API key for {service}: {api_key[:4]}...{api_key[-4:]}")
-    if service and api_key:
-        self.api_manager.api_keys[service] = api_key
-        self.api_manager.save_api_key(service, api_key)
-        self.initialize_agi()
-        ui.notify(f'API key for {service} added and loaded successfully')
-        self.service_input.value = ''
-        self.key_input.value = ''
-        ui.run_javascript('setTimeout(() => { window.location.href = "/"; }, 1000);')
-    else:
-        ui.notify('Please provide both service name and API key')
-```
-
-# delete_api_key
-
-Deletes an existing API key and updates the AGI initialization
-
-```python
-def delete_api_key(self, service):
-    logging.debug(f"Deleting API key for {service}")
-    if service in self.api_manager.api_keys:
-        del self.api_manager.api_keys[service]
-        self.api_manager.remove_api_key(service)
-        self.initialize_agi()
-        ui.notify(f'API key for {service} removed successfully')
-        self.list_api_keys()  # Refresh the list after deletion
-    else:
-        ui.notify(f'No API key found for {service}')
-```
-
-# list_api_keys
-
-Lists all stored API keys in the UI
-
-```python
-def list_api_keys(self):
-    if self.api_manager.api_keys:
-        keys_list = [(service, key) for service, key in self.api_manager.api_keys.items()]
-        logging.debug(f"Stored API keys: {keys_list}")
-        if self.keys_container:
-            self.keys_container.clear()
-            for service, key in keys_list:
-                with self.keys_container:
-                    ui.label(f"{service}: {key[:4]}...{key[-4:]}").classes('flex-1')
-                    ui.button('Delete', on_click=lambda s=service: self.delete_api_key(s)).classes('ml-4')
-            ui.notify('Stored API keys:\n' + "\n".join([f"{service}: {key[:4]}...{key[-4:]}"] for service, key in keys_list]))
-    else:
-        ui.notify('No API keys in storage')
-        if self.keys_container:
-            self.keys_container.clear()
-            with self.keys_container:
-                ui.label('No API keys in storage')
-```
-
-# initialize_agi
-
-Initializes the AGI system based on available API keys
-
-```python
-def initialize_agi(self):
-    openai_key = self.api_manager.get_api_key('openai')
-    groq_key = self.api_manager.get_api_key('groq')
-    llama_running = self.check_llama_running()
-
-    if openai_key:
-        chatter = GPT4o(openai_key)
-        self.agi_instance = FundamentalAGI(chatter)
-        ui.notify('Using OpenAI for AGI')
-        logging.debug("AGI initialized with OpenAI")
-    elif groq_key:
-        chatter = GroqModel(groq_key)
-        self.agi_instance = FundamentalAGI(chatter)
-        ui.notify('Using Groq for AGI')
-        logging.debug("AGI initialized with Groq")
-    elif llama_running:
-        # Placeholder for future LLaMA integration
-        ui.notify('LLaMA found running, future integration coming')
-        logging.debug("LLaMA running on localhost:11434")
-    else:
-        self.agi_instance = None
-        ui.notify('No valid API key or LLaMA instance found. Please add an API key or start LLaMA.')
-        logging.debug("No valid API key or LLaMA instance found. AGI not initialized.")
-```
-
-# check_llama_running
-
-Checks if the LLaMA service is running.
-
-```python
-def check_llama_running(self):
-    try:
-        response = httpx.get('http://localhost:11434')
-        if response.status_code == 200:
-            return True
-    except httpx.RequestError as e:
-        logging.debug(f"LLaMA connection failed: {e}")
-    return False
-```
-
-# get_conclusion_from_agi
-
-Gets a conclusion from the AGI based on the provided prompt
-
-```python
-async def get_conclusion_from_agi(self, prompt):
-    """
-    Get a conclusion from the AGI based on the provided prompt.
-    This method is asynchronous to allow non-blocking operations.
-    """
-    if self.agi_instance is None:
-        return "AGI not initialized. Please add an API key or start LLaMA."
-    conclusion = await asyncio.get_event_loop().run_in_executor(None, self.agi_instance.get_conclusion_from_agi, prompt)
-    return conclusion
-```
-
-# communicate_response
-
-Logs and prints the conclusion from the AGI
-
-```python
-def communicate_response(self, conclusion):
-    """
-    Log and print the conclusion from the AGI.
-    """
-    # uncomment below to show conclusion in the terminal
-    #logging.info(f"Communicating response: {conclusion}")
-    self.display_internal_conclusion(conclusion)
-    return conclusion
-```
-
-# reasoning_loop
-
-Internal reasoning loop for continuous AGI reasoning without user interaction
-
-```python
-async def reasoning_loop(self):
-    """
-    Internal reasoning loop for continuous AGI reasoning without user interaction.
-    This loop adds a prompt to the AGI and processes its conclusion periodically.
-    The conclusions are currently displayed in the response window and saved to ./memory/logs/thoughts.json including ./memory/logs/notpremise.json
-    """
-    while True:
-        if self.agi_instance is None:
-            openai_key = self.api_manager.get_api_key('openai')
-            groq_key = self.api_manager.get_api_key('groq')
-            llama_running = self.check_llama_running()
-            if openai_key or groq_key or llama_running:
-                self.initialize_agi()
-            else:
-                logging.debug("Waiting for API key or LLaMA instance...")
-                await asyncio.sleep(5)  # Wait before checking again
-                continue
-
-        prompt = self.prompt  # Use the updated prompt from user input
-        conclusion = await self.get_conclusion_from_agi(prompt)
-        self.display_internal_conclusion(conclusion)
-        save_internal_reasoning({"timestamp": int(time.time()), "prompt": prompt, "conclusion": conclusion})
-        await asyncio.sleep(10)  # Adjust the delay as necessary
-```
-
-# display_internal_conclusion
-
-Displays the internal reasoning conclusion in the response window and logs it to a JSON file
-
-```python
-def display_internal_conclusion(self, conclusion):
-    """
-    Display the internal reasoning conclusion in the response window and log it to a JSON file.
-    """
-    if conclusion != "No premises available for logic as conclusion.":
-        if self.message_container:
-            with self.message_container:
-                response_message = ui.chat_message(name='funAGI', sent=False)
-                response_message.clear()
-                with response_message:
-                    ui.html(f"Internal reasoning conclusion: {conclusion}")
-        logging.info(f"Internal reasoning conclusion: {conclusion}")
-
-    # Determine which log file to write to
-    log_entry = {
-        "timestamp": datetime.now().isoformat(),
-        "conclusion": conclusion
-    }
-    
-    if conclusion == "No premises available for logic as conclusion.":
-        log_file_path = "./memory/logs/notpremise.json"
-    else:
-        log_file_path = "./memory/logs/thoughts.json"
-
-    if not os.path.exists(log_file_path):
-        with open(log_file_path, 'w') as file:
-            json.dump([log_entry], file, indent=4)
-    else:
-        with open(log_file_path, 'r+') as file:
-            data = json.load(file)
-            data.append(log_entry)
-            file.seek(0)
-            json.dump(data, file, indent=4)
-```
-
-# main_loop
-
-Main loop to handle both internal reasoning and user input
-
-```python
-
-async def main_loop(self):
-    """
-    Main loop to handle both internal reasoning and user input.
-    """
-    asyncio.create_task(self.reasoning_loop())
-
-    while True:
-        prompt = await self.internal_queue.get()
-        if prompt == 'exit':
-            break
-        self.prompt = prompt  # Update the prompt with the new input
-        conclusion = await self.get_conclusion_from_agi(prompt)
-        self.communicate_response(conclusion)
-        # Save the input-response pair using save_conversation_memory
-        save_conversation_memory({"dialog": {"instruction": prompt, "response": conclusion}})
-```
-
-# send_message
-
-Handles sending a message to the AGI and updating the UI with the response
-
-```python
-async def send_message(self, question):
-    if self.message_container:
-        with self.message_container:
-            ui.chat_message(text=question, name='query', sent=True)
-            response_message = ui.chat_message(name='easyAGI', sent=False)
-            spinner = ui.spinner(type='dots')
-
-    try:
-        conclusion = await self.get_conclusion_from_agi(question)
-        if response_message:
-            response_message.clear()
-            with response_message:
-                ui.html(conclusion)
-
-        await self.run_javascript_with_retry('window.scrollTo(0, document.body.scrollHeight)', retries=3, timeout=30.1)
-
-        # Store the dialog entry
-        entry = DialogEntry(question, conclusion)
-        store_in_stm(entry)
-        # saves conversation following each input response to ./memory/stm/timestampmemeory.json from memory.py
-        save_conversation_memory({"dialog": {"instruction": question, "response": conclusion}})
-    except Exception as e:
-        logging.error(f"Error getting conclusion from easyAGI: {e}")
-        if self.log:
-            self.log.push(f"Error getting conclusion from easyAGI: {e}")
-    finally:
-        try:
-            if self.message_container:
-                self.message_container.remove(spinner)  # Correctly remove the spinner
-        except KeyError:
-            logging.warning("Spinner element not found in message_container.")
-```
-
-# run_javascript_with_retry
-
-Runs a JavaScript command with retries
-
-```python
-async def run_javascript_with_retry(self, script, retries=3, timeout=10.0):
-    for attempt in range(retries):
-        try:
-            await ui.run_javascript(script, timeout=timeout)
-            return
-        except TimeoutError:
-            logging.warning(f"JavaScript did not respond within {timeout} s on attempt {attempt + 1}")
-    raise TimeoutError(f"JavaScript did not respond after {retries} attempts")
-```
-
-# read_log_file
-
-Reads the content of a log file and returns it
-
-```python
-def read_log_file(self, file_path):
-    """
-    Read the content of a log file and return it.
-    """
-    try:
-        with open(file_path, 'r') as file:
-            return file.read()
-    except FileNotFoundError:
-        logging.error(f"Log file not found: {file_path}")
-        return f"Log file not found: {file_path}"
-    except Exception as e:
-        logging.error(f"Error reading log file {file_path}: {e}")
-        return f"Error reading log file {file_path}: {e}"
-```
-
-# handle_javascript_response
-
-Handles the JavaScript response for the UI
-
-```python
-
-def handle_javascript_response(self, msg):
-    request_id = msg.get('request_id')
-    result = msg.get('result', None)
-
-    if request_id is not None:
-        if result is not None:
-            JavaScriptRequest.resolve(request_id, result)
-        else:
-            # Handle the case where 'result' is missing
-            JavaScriptRequest.reject(request_id, 'Missing result in JavaScript response')
-            logging.error(f"JavaScript response missing 'result' for request_id: {request_id}. Response: {msg}")
-    else:
-        # Handle the case where 'request_id' is missing if needed
-        logging.error(f"JavaScript response missing 'request_id'. Response: {msg}")
-
-    # Log the entire message for debugging purposes
-    logging.debug(f"Received JavaScript response: {msg}")
-```
-
-# Usage
-
-    Initialize OpenMind: Create an instance of the OpenMind class
-    Manage API Keys: Use add_api_key, delete_api_key, and list_api_keys to manage API keys
-    Run Main Loop: Call main_loop to start handling both internal reasoning and user input
+# openmind.py — the reasoning core of easyAGI / ezAGI
+
+`openmind.py` (c) 2024 Gregory L. Magnusson · MIT
+
+`OpenMind` is the module that binds the **user interface** (`ezAGI.py`, the
+NiceGUI console) to the **AGI reasoning stack** (`automind/`) and the **LLM
+provider layer** (`webmind/`). It owns application state — API keys, the active
+provider/model, sampling controls, token accounting, and the reasoning-trace
+feed — and it runs two cooperating asyncio loops: one that answers user input
+and one that reasons continuously on its own.
+
+> Naming: `ezAGI.py` is the canonical entry point; `easyAGI.py` is a thin
+> `runpy` shim that launches the same console (the project was originally named
+> *easyAGI*, hence the name still appears in the UI title and this module's
+> comments). See [the AGI layer](agi.md) for the class stack below `OpenMind`.
 
 ---
 
-## v1.0.0 update
+## Where OpenMind sits
 
-The code above reflects the original 2024 design. As of v1.0.0, `initialize_agi`
-and `select_model` are built on `webmind.chatter.resolve_chatter`, which resolves
-providers cloud-first — openai → groq → together → anthropic → ollama-cloud — with
-the local Ollama daemon as failsafe (constructing a real `OllamaModel`, no longer a
-placeholder). OpenMind also carries the console state: streaming `send_message`,
-the reasoning trace queue feeding the reasoning panel, session token counters,
-sampling controls (`set_sampling`), and a stuck-loop guard on the autonomous
-`reasoning_loop` (empty prompts are skipped; an unchanged prompt is re-reasoned at
-most three times). All log writes route through `memory/memory.py` — all logs are
-memories.
+```
+ezAGI.py  (NiceGUI console: tabs, footer input, header controls)
+   │  holds a single shared OpenMind instance
+   ▼
+OpenMind  (automind/openmind.py)  ── this document
+   │  owns state + two async loops; talks to:
+   ├──────────────► FundamentalAGI ─► AGI ─► SocraticReasoning   (automind/*)  the reasoning stack
+   │                                    └─► chatter               (webmind/chatter.py)  LLM providers
+   ├──────────────► APIManager        (webmind/api.py)            key storage (.env)
+   ├──────────────► OllamaHandler     (webmind/ollama_handler.py) local / cloud Ollama
+   └──────────────► memory.*          (memory/memory.py)          STM + logs-as-memories
+```
+
+A single `OpenMind` is created once at startup in `ezAGI.py` and shared across
+all page visits — there is one internal reasoning loop for the whole app, not
+one per browser client.
+
+---
+
+## The AGI stack, and the role of AGI in easyAGI
+
+`OpenMind` never calls an LLM directly. It delegates all reasoning to an **AGI
+instance**, which is where "easyAGI" actually *thinks*. Three classes matter,
+each documented in full in [agi.md](agi.md):
+
+- **`FundamentalAGI`** (`automind/automind.py`) — the object `OpenMind` holds as
+  `self.agi_instance`. It is a thin wrapper that owns an `AGI` (`self.agi`) and
+  exposes `get_conclusion_from_agi(prompt)`: it adds the prompt to the reasoner
+  as a premise and returns a drawn conclusion. This is the single method
+  `OpenMind` calls to answer anything.
+- **`AGI`** (`automind/agi.py`) — holds the `chatter` (the LLM provider) and a
+  `SocraticReasoning` engine (`self.reasoning`). It is the seat of the AGI: the
+  reasoner and the model live here together.
+- **`EasyAGI`** (`automind/agi.py`) — the original **terminal** front end for
+  the same `AGI`. Its `main_loop()` reads from stdin (`perceive_environment`),
+  runs `learn_from_data` → `make_decisions`, and prints the result. `OpenMind`
+  is the web-console successor to `EasyAGI`: both drive the identical `AGI`
+  reasoning core, one over NiceGUI, the other over a prompt. This is "the role
+  of AGI in easyAGI" — `AGI` is the shared brain; `EasyAGI` (CLI) and
+  `OpenMind`/`ezAGI.py` (console) are two skins over it.
+
+### What one "turn" actually does
+
+When `OpenMind` asks for a conclusion, `SocraticReasoning.draw_conclusion()`
+makes **several** LLM calls, not one:
+
+1. (optional) a supporting-premise generation,
+2. the **streamed conclusion** (`generate_response_with_tokens`),
+3. a **validation judgment** (`generate_response` with a verdict prompt), and
+4. if unvalidated, a new premise is generated and the loop retries.
+
+This multi-call shape is why token accounting reads a *cumulative delta* rather
+than the last call — see [Token accounting](#token-accounting) below.
+
+---
+
+## OpenMind state (`__init__`)
+
+| Field | Purpose |
+|---|---|
+| `api_manager` | `APIManager` — reads/writes provider keys in `.env`. |
+| `agi_instance` | the active `FundamentalAGI`, or `None` until a provider resolves. |
+| `message_container` | the chat tab's NiceGUI column (production output). |
+| `ollama_handler` | local Ollama endpoint probe/handler. |
+| `internal_queue` | user inputs handed from the UI to `main_loop`. |
+| `prompt` | the current thing being reasoned about. |
+| `keys_container`, `log` | UI containers for the API-keys and logs tabs. |
+| `current_provider`, `current_model` | active selection, shown in the header. |
+| `temperature`, `max_tokens` | sampling controls (`None` = provider default). |
+| `session_tokens` | `{last_in, last_out, total}` shown in the header. |
+| `_usage_baseline` | snapshot of the chatter's `cumulative_usage` after the last accounted turn. |
+| `trace_queue`, `reasoning_state` | reasoning-trace event feed and `idle`/`thinking` state. |
+| `_last_reasoned_prompt`, `_same_prompt_count` | guard so the autonomous loop stops re-reasoning the same prompt after three passes. |
+
+---
+
+## Lifecycle: the two loops
+
+`ezAGI.py` schedules `main_loop()` once at startup
+(`app.on_startup(lambda: asyncio.create_task(openmind.main_loop()))`).
+
+### `main_loop()`
+Records the running event loop (`_ui_loop`, needed for thread-safe callbacks
+from the executor), starts the autonomous `reasoning_loop()` as a background
+task, then blocks on `internal_queue`. Each dequeued prompt becomes `self.prompt`
+and resets the autonomous guard. `'exit'` breaks the loop.
+
+### `reasoning_loop()` (autonomous)
+Runs forever: if no provider is available it waits and retries; if there is a
+prompt it hasn't already reasoned to rest (fewer than three identical passes),
+it sets `reasoning_state = "thinking"`, calls `get_conclusion_from_agi`, routes
+the conclusion to the reasoning-trace panel and thought logs, accounts token
+usage, and persists the internal reasoning. This is the "thinking on its own"
+behavior — distinct from the production chat.
+
+### `send_message(question)` (interactive, called from the UI)
+The production path, with **live streaming**:
+
+1. Renders the user's `query` bubble and an empty `ezAGI` response bubble + spinner.
+2. Creates an `asyncio.Queue` and installs `on_token` / `on_event` callbacks on
+   the reasoner. `on_token` forwards each streamed chunk to the queue via
+   `loop.call_soon_threadsafe` (the reasoner runs in an executor thread).
+3. Runs `agi_instance.get_conclusion_from_agi` in a thread executor while the
+   coroutine drains the queue, re-rendering the partial answer roughly every
+   0.1 s. A `STREAM_RESET` sentinel (pushed when a conclusion attempt restarts)
+   clears the accumulated text so a retry doesn't concatenate onto the old one.
+4. On completion, renders the final conclusion, calls `_account_usage`, scrolls
+   to the bottom, and stores the dialog in STM + conversation memory.
+5. `finally` clears the callbacks, resets `reasoning_state`, and removes the spinner.
+
+### `get_conclusion_from_agi(prompt)`
+Async wrapper that runs the (blocking) `FundamentalAGI.get_conclusion_from_agi`
+in a thread executor so the event loop is never blocked; returns a guidance
+string if no provider is initialized.
+
+---
+
+## Providers, models, and sampling
+
+- `available_providers()` / `models_for(provider)` — enumerate what keys/daemons
+  are usable and their model lists (`KNOWN_MODELS`, live Ollama tags).
+- `select_model(provider, model)` — switch the active provider/model, rebuilding
+  the chatter through `resolve_chatter`.
+- `initialize_agi()` — resolve a chatter **cloud-first with local Ollama as
+  failsafe**, wrap it in `FundamentalAGI`, apply sampling, and **reset
+  `_usage_baseline`** (a fresh chatter starts its cumulative usage at zero).
+- `set_sampling` / `_apply_sampling` — push `temperature` / `max_tokens` onto the
+  chatter; `None` leaves a control at the provider default.
+
+Keys are managed with `add_api_key`, `list_api_keys`, `delete_api_key`, and
+`use_api_key`, all backed by `APIManager` (stored in `.env`).
+
+---
+
+## Token accounting
+
+The header shows `in / out` for the **last turn** and a **session** total. Because
+a turn spans several LLM calls, correct accounting can't read the chatter's
+`last_usage` (that holds only the final sub-call — historically this made the
+counter show, e.g., a tiny `460/135` validation call as if it were the whole
+turn).
+
+Instead:
+
+- `BaseChatter` (`webmind/chatter.py`) keeps a **monotonic** `cumulative_usage`
+  (`{input_tokens, output_tokens}`), folded in after **every** call via
+  `_fold_usage()` from both `generate_response_async` and the streaming
+  `generate_response_with_tokens`.
+- `_account_usage(response_text)` reads the **delta** of `cumulative_usage` since
+  `_usage_baseline`, records that as the turn's `last_in`/`last_out`, adds it to
+  the session `total`, and advances the baseline. If a provider reports no usage
+  (e.g. local Ollama), it falls back to a length estimate (`len(text) // 4`).
+
+While streaming, `send_message` also updates `session_tokens["last_out"]` live
+from the accumulated text as an **estimate** (the header marks it with `≈` and a
+pulse); `_account_usage` then reconciles to the exact per-turn totals when the
+turn completes.
+
+---
+
+## Reasoning trace and "logs are memories"
+
+- `_trace(event_type, payload)` queues a timestamped event (thread-safe via
+  `_ui_loop`) onto `trace_queue`; `ezAGI.py`'s reasoning tab consumes it to show
+  the live SocraticReasoning trace, kept strictly separate from the chat tab.
+- Conclusions and non-premises are written to memory logs
+  (`./memory/logs/thoughts.json`, `notpremise.json`), and dialog turns to
+  `./memory/stm/{timestamp}memory.json` — in this project **every log is a
+  memory**.
+- `read_log_file(path)` backs the logs tab. A missing or empty log renders as
+  `(no entries yet)` rather than an error, since files like `errorlogs.txt` are
+  created lazily the first time the reasoner writes to them.
+
+---
+
+## UI helpers
+
+- `run_javascript_with_retry(script, retries, timeout)` — awaits
+  `ui.run_javascript` directly (it returns an `AwaitableResponse`, which is
+  awaitable but **not** a coroutine, so it must not be wrapped in
+  `asyncio.create_task`), retrying on `TimeoutError`.
+- `_handle_task_result(task)` — done-callback that surfaces exceptions from the
+  background `reasoning_loop` task without treating cancellation as an error.
+
+---
+
+## Dependencies
+
+`os`, `time`, `datetime`, `asyncio`, `logging`, `ujson`, `httpx`, `nicegui`;
+and internally `memory.memory`, `automind.automind` (`FundamentalAGI`),
+`webmind.chatter`, `webmind.api`, `webmind.ollama_handler`.
+
+## See also
+
+- [agi.md](agi.md) — the `AGI` / `FundamentalAGI` / `EasyAGI` stack in full.
+- [SocraticReasoning.md](SocraticReasoning.md) — the reasoning engine.
+- [reasoning.md](reasoning.md), [logic.md](logic.md), [memory.md](memory.md).

@@ -343,10 +343,52 @@ header {
 .console-model {
     min-width: 16rem;
 }
+/* Token readout — labeled, color-coded pills (input / output / session) */
 .token-counter {
-    font-family: monospace;
-    font-size: 0.85rem;
-    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem;
+    line-height: 1;
+}
+
+.tok-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+.tok-pill .tok-k {
+    font-weight: 500;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.7;
+}
+
+/* input — blue · output — green · session total — amber */
+.tok-in    { background: rgba(74, 144, 217, 0.15); color: #cfe4fb; border-color: rgba(74, 144, 217, 0.35); }
+.tok-out   { background: rgba(62, 207, 142, 0.15); color: #cdf3e2; border-color: rgba(62, 207, 142, 0.35); }
+.tok-total { background: rgba(240, 160, 75, 0.15); color: #f7e2c4; border-color: rgba(240, 160, 75, 0.40); }
+
+/* pulse the output pill while the estimate is still growing */
+.tok-live { animation: tok-pulse 1.1s ease-in-out infinite; }
+
+@keyframes tok-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+}
+
+@media (prefers-color-scheme: light) {
+    .tok-in    { color: #1c4c78; }
+    .tok-out   { color: #1a6b45; }
+    .tok-total { color: #8a5410; }
 }
 .trace-container {
     font-size: 0.9rem;

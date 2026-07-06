@@ -22,11 +22,11 @@ See also <a href="https://rage.pythai.net/draw_conclusionself/">draw_conclusion(
     easyAGIcli.py run the terminal interaction version
 
     automind folder contain reasoning components
-    agi.py: Core AGI logic
+    agi.py: Core AGI logic — AGI / FundamentalAGI / EasyAGI (see agi.md)
     bdi.py: BDI (Belief-Desire-Intention) model
     logic.py: Logic table management and evaluation
     SocraticReasoning.py: Socratic Reasoning from logic
-    openmind internal asyncronous reasoning
+    openmind.py: console core binding the UI to the AGI stack (see openmind.md)
 
         api.py: API key management
         chatter.py: Interface for different chat models
