@@ -53,30 +53,27 @@ app.on_startup(lambda: asyncio.create_task(openmind.main_loop()))
 
 
 def _trace_row(container, event):
-    """Render one reasoning-trace event into the trace container."""
+    """
+    Render one reasoning-trace event. Only the final conclusions are useful
+    output, so the intermediate premise / generated-premise / challenge /
+    conclusion-attempt / validation events are suppressed as noise — the
+    validity and confidence they carry are folded into the conclusion card.
+    """
     kind = event.get("type")
+    if kind not in ("conclusion", "internal_conclusion"):
+        return
     stamp = event.get("time", "")
     with container:
-        if kind == "premise":
-            ui.label(f"{stamp}  premise: {event.get('premise', '')}").classes('trace-row trace-premise')
-        elif kind == "generated_premise":
-            ui.label(f"{stamp}  generated premise: {event.get('premise', '')}").classes('trace-row trace-generated')
-        elif kind == "challenge":
-            ui.label(f"{stamp}  challenged: {event.get('premise', '')}").classes('trace-row trace-challenge')
-        elif kind == "conclusion_attempt":
-            ui.separator()
-            ui.label(f"{stamp}  conclusion attempt {event.get('attempt', '?')}").classes('trace-row trace-attempt')
-        elif kind == "validation":
-            verdict = "VALID" if event.get("valid") else "INVALID"
-            badge_color = "green" if event.get("valid") else "orange"
-            with ui.row().classes('trace-row items-center'):
-                ui.label(f"{stamp}  validation ({event.get('method', '')})")
-                ui.badge(f"{verdict} · {event.get('confidence', 0):.1f}", color=badge_color)
-        elif kind == "conclusion":
+        if kind == "conclusion":
+            validated = event.get("validated")
+            verdict = "validated" if validated else "unvalidated"
+            badge_color = "green" if validated else "orange"
             with ui.card().classes('trace-conclusion w-full'):
-                ui.label(f"{stamp}  conclusion (confidence {event.get('confidence', 0):.1f})").classes('text-bold')
+                with ui.row().classes('items-center w-full no-wrap'):
+                    ui.label(f"{stamp}  conclusion").classes('text-bold')
+                    ui.badge(f"{verdict} · {event.get('confidence', 0):.1f}", color=badge_color)
                 ui.markdown(event.get("conclusion", ""))
-        elif kind == "internal_conclusion":
+        else:  # internal_conclusion (autonomous reasoning loop)
             with ui.card().classes('trace-internal w-full'):
                 ui.label(f"{stamp}  autonomous reasoning").classes('text-bold')
                 ui.markdown(event.get("conclusion", ""))
@@ -186,7 +183,7 @@ def main():
 
         # reasoning: the live internal SocraticReasoning trace
         with ui.tab_panel(reasoning_tab):
-            ui.label('internal reasoning — SocraticReasoning trace').classes('text-bold')
+            ui.label('internal reasoning — conclusions (green = validated)').classes('text-bold')
             trace_container = ui.column().classes('w-full trace-container')
 
         # logs: reasoning artifacts on disk
@@ -211,6 +208,10 @@ def main():
                 log_container.clear()
                 with log_container:
                     ui.markdown(f"```\n{log_content}\n```").classes('w-full')
+
+            # pressing the logs tab (again) clears the open log and returns to the
+            # buttons-only view, so the choices are visible after reading a log
+            logs_tab.on('click', lambda: log_container.clear())
 
         # API keys management
         with ui.tab_panel(api_tab):
